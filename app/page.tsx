@@ -110,27 +110,27 @@ export default function HomePage() {
           <motion.div
             variants={item}
             className={`rounded-xl shadow-md p-6 mb-6 border-2 ${
-              subscription.trafficGb > 99999
+              (subscription.trafficGb ?? 0) > 99999
                 ? 'bg-gradient-to-br from-yellow-50 via-amber-50 to-orange-50 border-yellow-300'
                 : 'bg-gradient-to-br from-green-50 to-blue-50 border-green-200'
             }`}
           >
             <div className="flex items-center justify-between mb-4">
               <span className={`text-sm font-semibold ${
-                subscription.trafficGb > 99999 ? 'text-yellow-700' : 'text-green-700'
+                (subscription.trafficGb ?? 0) > 99999 ? 'text-yellow-700' : 'text-green-700'
               }`}>
-                {subscription.trafficGb > 99999 ? '👑 Безлимитная подписка' : '✅ Подписка активна'}
+                {(subscription.trafficGb ?? 0) > 99999 ? '👑 Безлимитная подписка' : '✅ Подписка активна'}
               </span>
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
                 className="text-2xl"
               >
-                {subscription.trafficGb > 99999 ? '✨' : '🔒'}
+                {(subscription.trafficGb ?? 0) > 99999 ? '✨' : '🔒'}
               </motion.div>
             </div>
             
-            {subscription.trafficGb > 99999 ? (
+            {(subscription.trafficGb ?? 0) > 99999 ? (
               <div className="mb-4 p-4 bg-gradient-to-r from-yellow-100 to-amber-100 rounded-lg border border-yellow-300">
                 <p className="text-center text-yellow-800 font-bold text-lg mb-1">∞ Безлимит</p>
                 <p className="text-center text-yellow-700 text-xs">Неограниченный трафик и доступ</p>
@@ -159,10 +159,10 @@ export default function HomePage() {
             )}
             
             <div className={`rounded-lg p-3 mb-4 ${
-              subscription.trafficGb > 99999 ? 'bg-yellow-100' : 'bg-green-100'
+              (subscription.trafficGb ?? 0) > 99999 ? 'bg-yellow-100' : 'bg-green-100'
             }`}>
               <p className={`text-xs font-mono break-all ${
-                subscription.trafficGb > 99999 ? 'text-yellow-800' : 'text-green-800'
+                (subscription.trafficGb ?? 0) > 99999 ? 'text-yellow-800' : 'text-green-800'
               }`}>
                 {subscription.vpnUri}
               </p>
@@ -171,7 +171,7 @@ export default function HomePage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={`w-full font-semibold py-2 px-4 rounded-lg transition-colors ${
-                subscription.trafficGb > 99999
+                (subscription.trafficGb ?? 0) > 99999
                   ? 'bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white'
                   : 'bg-green-600 hover:bg-green-700 text-white'
               }`}
