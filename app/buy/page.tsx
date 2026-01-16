@@ -22,6 +22,7 @@ export default function BuyPage() {
     try {
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 123;
       const amount = assetAmounts[selectedAsset];
+      const tg = (window as any).Telegram?.WebApp;
       
       const response = await fetch('/api/create-invoice', {
         method: 'POST',
@@ -35,10 +36,17 @@ export default function BuyPage() {
       });
 
       const data = await response.json();
+      console.log('create-invoice response', data);
       
       if (data.success && data.invoiceUrl) {
-        // Открываем ссылку на оплату
-        window.open(data.invoiceUrl, '_blank');
+        // Открываем ссылку на оплату внутри Telegram, если возможно
+        if (tg?.openTelegramLink) {
+          tg.openTelegramLink(data.invoiceUrl);
+        } else if (tg?.openLink) {
+          tg.openLink(data.invoiceUrl);
+        } else {
+          window.open(data.invoiceUrl, '_blank');
+        }
       } else {
         alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
       }
