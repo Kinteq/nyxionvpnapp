@@ -23,6 +23,8 @@ export default function BuyPage() {
       const userId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 123;
       const amount = assetAmounts[selectedAsset];
       
+      console.log('Creating invoice...', { userId, method: selectedMethod, asset: selectedAsset, amount });
+      
       const response = await fetch('/api/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,16 +37,31 @@ export default function BuyPage() {
       });
 
       const data = await response.json();
+      console.log('Invoice response:', data);
       
       if (data.success && data.invoiceUrl) {
-        // Открываем ссылку на оплату
-        window.open(data.invoiceUrl, '_blank');
+        // Открываем ссылку через Telegram WebApp для правильной работы
+        if (window.Telegram?.WebApp) {
+          try {
+            // @ts-ignore - openLink существует в runtime
+            if (typeof window.Telegram.WebApp.openLink === 'function') {
+              // @ts-ignore
+              window.Telegram.WebApp.openLink(data.invoiceUrl);
+            } else {
+              window.location.href = data.invoiceUrl;
+            }
+          } catch (e) {
+            window.location.href = data.invoiceUrl;
+          }
+        } else {
+          window.location.href = data.invoiceUrl;
+        }
       } else {
         alert('Ошибка: ' + (data.error || 'неизвестная ошибка'));
       }
     } catch (error) {
       console.error('Payment error:', error);
-      alert('Ошибка при создании счёта');
+      alert('Ошибка при создании счёта: ' + error);
     } finally {
       setLoading(false);
     }
