@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface SubscriptionProps {
   subscription: {
@@ -16,6 +17,7 @@ interface SubscriptionProps {
 
 export default function SubscriptionCard({ subscription }: SubscriptionProps) {
   const [showKey, setShowKey] = useState(false);
+  const router = useRouter();
 
   if (!subscription?.isActive) {
     return (
@@ -51,13 +53,36 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
     }
   };
 
+  const parseExpiryDate = (dateStr?: string): Date | null => {
+    if (!dateStr) return null;
+    
+    if (dateStr.includes('-') || dateStr.includes('T')) {
+      const date = new Date(dateStr);
+      return isNaN(date.getTime()) ? null : date;
+    }
+    
+    const parts = dateStr.split('.');
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map(p => parseInt(p, 10));
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return new Date(year, month - 1, day);
+      }
+    }
+    
+    return null;
+  };
+
+  const expiryDateObj = parseExpiryDate(subscription.expiryDate);
+  const formattedDate = expiryDateObj 
+    ? expiryDateObj.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : 'N/A';
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="card bg-card-gradient border-2 border-peach/20"
     >
-      {/* Status Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
@@ -68,7 +93,6 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="text-center p-3 bg-white rounded-xl">
           <div className="text-2xl font-bold gradient-text">
@@ -83,15 +107,11 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         </div>
       </div>
 
-      {/* Expiry Date */}
       <div className="text-center mb-4">
         <p className="text-sm text-textLight">Действует до</p>
-        <p className="text-lg font-semibold">
-          {subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString('ru-RU') : 'N/A'}
-        </p>
+        <p className="text-lg font-semibold">{formattedDate}</p>
       </div>
 
-      {/* VPN Key */}
       <div className="space-y-2">
         <button
           onClick={() => setShowKey(!showKey)}
@@ -120,9 +140,11 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         )}
       </div>
 
-      {/* Actions */}
       <div className="mt-4 pt-4 border-t border-gray-200">
-        <button className="btn-primary w-full">
+        <button 
+          onClick={() => router.push('/buy')}
+          className="btn-primary w-full"
+        >
           🔄 Продлить подписку
         </button>
       </div>
