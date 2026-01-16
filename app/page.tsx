@@ -9,6 +9,11 @@ interface Subscription {
   expiryDate?: string;
   daysLeft?: number;
   vpnUri?: string;
+  trafficGb?: number;
+  devicesCount?: number;
+  maxDevices?: number;
+  deviceLimitReached?: boolean;
+  error?: string;
 }
 
 const container = {
@@ -37,8 +42,12 @@ export default function HomePage() {
           const user = window.Telegram.WebApp.initDataUnsafe?.user;
           if (user?.id) {
             setUserId(user.id);
-            // Загружаем подписку пользователя
-            const res = await fetch(`/api/subscription?userId=${user.id}`);
+            
+            // Генерация deviceId из данных устройства
+            const deviceId = `tg_${user.id}_${navigator.userAgent.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // Загружаем подписку пользователя с deviceId
+            const res = await fetch(`/api/subscription?userId=${user.id}&deviceId=${encodeURIComponent(deviceId)}`);
             const data = await res.json();
             setSubscription(data);
           }
@@ -52,6 +61,29 @@ export default function HomePage() {
 
     initializeUser();
   }, []);
+
+  // Проверка на ошибку лимита устройств
+  if (subscription?.deviceLimitReached) {
+    return (
+      <motion.div
+        className="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-6 pb-24"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <div className="max-w-md mx-auto px-4">
+          <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 mt-8">
+            <h2 className="text-xl font-bold text-red-700 mb-3">⚠️ Превышен лимит устройств</h2>
+            <p className="text-red-600 text-sm mb-4">{subscription.error}</p>
+            <Link href="/profile">
+              <button className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-colors">
+                Управление устройствами
+              </button>
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -108,10 +140,22 @@ export default function HomePage() {
                 <p className="text-gray-700 text-sm mb-3">
                   <strong>Истекает:</strong> {subscription.expiryDate}
                 </p>
-                <p className="text-gray-700 text-sm mb-4">
+                <p className="text-gray-700 text-sm mb-3">
                   <strong>Осталось:</strong> {subscription.daysLeft} дней
                 </p>
+                <p className="text-gray-700 text-sm mb-4">
+                  <strong>Трафик:</strong> {subscription.trafficGb} GB
+                </p>
               </>
+            )}
+            
+            {/* Информация об устройствах */}
+            {subscription.devicesCount !== undefined && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-blue-800 text-xs text-center">
+                  📱 Устройств: <strong>{subscription.devicesCount}/{subscription.maxDevices}</strong>
+                </p>
+              </div>
             )}
             
             <div className={`rounded-lg p-3 mb-4 ${
@@ -156,15 +200,15 @@ export default function HomePage() {
 
         {/* Меню кнопок */}
         <motion.div variants={item} className="grid grid-cols-2 gap-3 mb-6">
-          {/* Купить */}
+          {/* Купить / Продлить */}
           <Link href="/buy">
             <motion.button
               whileHover={{ scale: 1.05, boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)' }}
               whileTap={{ scale: 0.95 }}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 px-4 rounded-xl shadow-lg transition-all text-center text-lg"
             >
-              🛒<br />
-              Купить
+              {subscription?.isActive ? '🔄' : '🛒'}<br />
+              {subscription?.isActive ? 'Продлить' : 'Купить'}
             </motion.button>
           </Link>
 
