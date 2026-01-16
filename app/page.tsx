@@ -41,8 +41,8 @@ export default function Home() {
 
   const fetchSubscription = async (uid: number) => {
     try {
-      // TODO: Замените на реальный API endpoint вашего бота
-      const response = await fetch(`http://62.60.217.189:8081/api/subscription?userId=${uid}`);
+      // ИСПРАВЛЕНО: Запрос через Vercel API route вместо прямого обращения к VPS
+      const response = await fetch(`/api/subscription?userId=${uid}`);
       const data = await response.json();
       setSubscription(data);
     } catch (error) {
