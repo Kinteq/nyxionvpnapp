@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface SubscriptionProps {
   subscription: {
@@ -28,9 +29,11 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         <p className="text-textLight mb-4">
           Приобретите VPN для получения доступа к быстрому и безопасному интернету
         </p>
-        <button className="btn-primary w-full">
-          Купить подписку
-        </button>
+        <Link href="/buy">
+          <button className="btn-primary w-full">
+            Купить подписку
+          </button>
+        </Link>
       </motion.div>
     );
   }

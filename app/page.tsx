@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
 import Header from '@/components/Header';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import Navigation from '@/components/Navigation';
@@ -42,7 +41,8 @@ export default function Home() {
 
   const fetchSubscription = async (uid: number) => {
     try {
-      const response = await fetch(`/api/subscription?userId=${uid}`);
+      // TODO: Замените на реальный API endpoint вашего бота
+      const response = await fetch(`http://62.60.217.189:8081/api/subscription?userId=${uid}`);
       const data = await response.json();
       setSubscription(data);
     } catch (error) {
@@ -129,9 +129,9 @@ export default function Home() {
           >
             <h2 className="text-2xl font-bold mb-2">Начните прямо сейчас!</h2>
             <p className="mb-4 opacity-90">30 дней безлимитного VPN всего за 150₽</p>
-            <Link href="/buy" className="btn-secondary w-full inline-block text-center">
+            <button className="btn-secondary w-full">
               💎 Купить VPN
-            </Link>
+            </button>
           </motion.div>
         )}
       </div>
