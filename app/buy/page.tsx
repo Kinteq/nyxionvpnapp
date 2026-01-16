@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Header from '@/components/Header';
+import Navigation from '@/components/Navigation';
 
 export default function BuyPage() {
   const [selectedMethod, setSelectedMethod] = useState<'cryptobot' | 'yukassa'>('cryptobot');
@@ -176,6 +177,7 @@ export default function BuyPage() {
           </p>
         )}
       </div>
+      <Navigation />
     </motion.main>
   );
 }
