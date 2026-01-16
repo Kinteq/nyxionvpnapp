@@ -52,13 +52,13 @@ export default function BuyPage() {
 
   return (
     <motion.main
-      className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900"
+      className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900 pb-28"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
       <Header />
-      <div className="px-4 py-6 pb-0">
+      <div className="px-4 py-6 pb-24">
         <h1 className="text-3xl font-bold mb-6 gradient-text">💎 Купить подписку</h1>
         
         {/* Пакет */}
