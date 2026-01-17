@@ -128,7 +128,7 @@ export default function ProfilePage() {
             >
               <h2 className="font-semibold mb-3">📱 Мои устройства</h2>
               <p className="text-textLight dark:text-white text-sm mb-3">
-                Подключенные устройства (макс. 3):
+                Подключенные устройства (макс. 2):
               </p>
               {loadingDevices ? (
                 <div className="text-center py-4 text-textLight dark:text-white">Загрузка...</div>
@@ -207,9 +207,14 @@ export default function ProfilePage() {
             >
                 <h2 className="font-semibold mb-3">❓ Поддержка</h2>
                 <p className="text-textLight dark:text-white text-sm mb-3">Возникли проблемы? Свяжитесь с нами:</p>
-              <button className="w-full p-3 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:border-orange-400 transition-colors font-semibold text-sm">
+              <a 
+                href="https://t.me/nyxion_support" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block w-full p-3 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:border-orange-400 transition-colors font-semibold text-sm text-center"
+              >
                 💬 Написать в поддержку
-              </button>
+              </a>
             </motion.div>
           </div>
         )}
