@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
-const getSystemTheme = () =>
+const getSystemTheme = (): 'light' | 'dark' =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
     ? 'dark'
     : 'light';
@@ -15,7 +15,23 @@ export function useThemeController() {
 
   const applyTheme = useCallback((mode: 'light' | 'dark') => {
     if (typeof document === 'undefined') return;
-    document.documentElement.classList.toggle('dark', mode === 'dark');
+    
+    // Добавляем класс для плавного перехода
+    document.documentElement.classList.add('theme-transitioning');
+    
+    // Применяем тему
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+    
+    // Убираем класс перехода после анимации
+    setTimeout(() => {
+      document.documentElement.classList.remove('theme-transitioning');
+    }, 350);
   }, []);
 
   useEffect(() => {
@@ -27,11 +43,19 @@ export function useThemeController() {
 
     setTheme(stored);
     setResolvedTheme(initialResolved);
-    applyTheme(initialResolved);
+    
+    // Применяем без анимации при инициализации
+    if (initialResolved === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
 
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (event: MediaQueryListEvent) => {
-      if (stored === 'system') {
+      if (theme === 'system') {
         const newResolved = event.matches ? 'dark' : 'light';
         setResolvedTheme(newResolved);
         applyTheme(newResolved);
@@ -40,18 +64,17 @@ export function useThemeController() {
 
     media.addEventListener('change', handleChange);
     return () => media.removeEventListener('change', handleChange);
-  }, [applyTheme]);
+  }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  const setThemeMode = useCallback((mode: ThemeMode) => {
+    setTheme(mode);
+    localStorage.setItem('theme', mode);
+    
     const systemTheme = getSystemTheme();
-    const nextResolved = theme === 'system' ? systemTheme : theme;
+    const nextResolved = mode === 'system' ? systemTheme : mode;
     setResolvedTheme(nextResolved);
     applyTheme(nextResolved);
-    localStorage.setItem('theme', theme);
-  }, [theme, applyTheme]);
-
-  const setThemeMode = (mode: ThemeMode) => setTheme(mode);
+  }, [applyTheme]);
 
   return {
     theme,
