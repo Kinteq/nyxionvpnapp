@@ -3,7 +3,7 @@ import json
 import logging
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Dict, Optional
 import math
 import aiohttp
 from aiohttp import web
@@ -16,6 +16,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, BufferedIn
 import qrcode
 from api_endpoints import setup_api_routes
 from io import BytesIO
+import asyncpg
 
 # ===== КОНФИГУРАЦИЯ =====
 
@@ -51,6 +52,10 @@ VPN_PRICES = {
 VPN_TRAFFIC_GB = 0  # 0 = безлимит
 VPN_DAYS = 30
 
+# PostgreSQL
+_raw_dsn = os.getenv("DATABASE_URL", "postgresql://nyxion_vpn:nyxion_vpn_pass@localhost/nyxion_vpn")
+DB_DSN = _raw_dsn.replace("postgresql+asyncpg://", "postgresql://")
+
 # ===== ЛОГИРОВАНИЕ =====
 
 logging.basicConfig(
@@ -75,46 +80,93 @@ class BroadcastStates(StatesGroup):
 # ===== ХРАНИЛИЩЕ ДАННЫХ =====
 
 pending_payments: Dict[int, dict] = {}  # invoice_id -> user_data
-active_subscriptions: Dict[int, dict] = {}  # user_id -> subscription_info
+active_subscriptions: Dict[int, dict] = {}  # user_id -> subscription_info (deprecated, use DB)
 retry_payments: Dict[int, dict] = {}  # user_id -> payment_data for retry
 payment_timers: Dict[int, dict] = {}  # user_id -> {invoice_id, task, expires_at}
 WEBHOOK_PUBLIC_URL = None
 
-SUBSCRIPTIONS_FILE = 'subscriptions.json'
+# ===== DATABASE FUNCTIONS =====
+
+async def get_subscription(user_id: int) -> Optional[dict]:
+    """Получить подписку из БД"""
+    try:
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            row = await conn.fetchrow(
+                "SELECT user_id, vpn_username as blitz_username, vpn_uri, expiry_date, traffic_gb, promo_code, is_active FROM subscriptions WHERE user_id = $1",
+                user_id
+            )
+            if row:
+                return dict(row)
+            return None
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Error getting subscription for {user_id}: {e}")
+        return None
+
+async def save_subscription(user_id: int, blitz_username: str, vpn_uri: str, expiry_date: datetime, traffic_gb: int = 0, promo_code: str = None):
+    """Сохранить/обновить подписку в БД"""
+    try:
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            now = datetime.now(timezone.utc)
+            is_active = expiry_date > now
+            
+            await conn.execute("""
+                INSERT INTO subscriptions (user_id, vpn_username, vpn_uri, expiry_date, traffic_gb, promo_code, is_active, created_at, updated_at, server_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
+                ON CONFLICT (user_id) 
+                DO UPDATE SET 
+                    vpn_uri = $3,
+                    expiry_date = $4,
+                    traffic_gb = $5,
+                    promo_code = COALESCE(subscriptions.promo_code, $6),
+                    is_active = $7,
+                    updated_at = $9
+            """, user_id, blitz_username, vpn_uri, expiry_date, traffic_gb, promo_code, is_active, now, now)
+            
+            logger.info(f"Saved subscription for user {user_id}")
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Error saving subscription for {user_id}: {e}")
+
+async def delete_subscription(user_id: int):
+    """Удалить подписку из БД"""
+    try:
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            await conn.execute("DELETE FROM subscriptions WHERE user_id = $1", user_id)
+            logger.info(f"Deleted subscription for user {user_id}")
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Error deleting subscription for {user_id}: {e}")
+
+async def get_all_subscriptions() -> Dict[int, dict]:
+    """Получить все активные подписки из БД"""
+    try:
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            rows = await conn.fetch(
+                "SELECT user_id, vpn_username as blitz_username, vpn_uri, expiry_date, traffic_gb, promo_code, is_active FROM subscriptions WHERE is_active = true"
+            )
+            return {row['user_id']: dict(row) for row in rows}
+        finally:
+            await conn.close()
+    except Exception as e:
+        logger.error(f"Error getting all subscriptions: {e}")
+        return {}
 
 def load_subscriptions():
-    global active_subscriptions
-    if os.path.exists(SUBSCRIPTIONS_FILE):
-        try:
-            with open(SUBSCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # Преобразуем строки дат обратно в datetime
-                for uid, sub in data.items():
-                    if 'expiry_date' in sub:
-                        sub['expiry_date'] = datetime.fromisoformat(sub['expiry_date'])
-                    if 'created_at' in sub:
-                        sub['created_at'] = datetime.fromisoformat(sub['created_at'])
-                active_subscriptions = {int(uid): sub for uid, sub in data.items()}
-                logger.info(f"Loaded {len(active_subscriptions)} subscriptions")
-        except Exception as e:
-            logger.error(f"Error loading subscriptions: {e}")
+    """Deprecated: subscriptions stored in PostgreSQL"""
+    logger.info("load_subscriptions() called but deprecated - using PostgreSQL")
 
 def save_subscriptions():
-    try:
-        data = {}
-        for uid, sub in active_subscriptions.items():
-            sub_copy = sub.copy()
-            # Преобразуем datetime в строки
-            if 'expiry_date' in sub_copy and isinstance(sub_copy['expiry_date'], datetime):
-                sub_copy['expiry_date'] = sub_copy['expiry_date'].isoformat()
-            if 'created_at' in sub_copy and isinstance(sub_copy['created_at'], datetime):
-                sub_copy['created_at'] = sub_copy['created_at'].isoformat()
-            data[str(uid)] = sub_copy
-        with open(SUBSCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        logger.info(f"Saved {len(active_subscriptions)} subscriptions")
-    except Exception as e:
-        logger.error(f"Error saving subscriptions: {e}")
+    """Deprecated: subscriptions stored in PostgreSQL"""
+    pass
+
 
 # ===== CRYPTO PAY API =====
 
@@ -557,39 +609,53 @@ async def verify_user_in_panel(user_id: int) -> bool:
         return False
 
 async def update_subscription_from_api(user_id: int) -> bool:
-    """Обновляет подписку пользователя из Blitz API (expiry_date и ключ)"""
-    if user_id not in active_subscriptions:
-        return False
+    """Обновляет подписку пользователя из Blitz API в PostgreSQL"""
     username = f"vpn_{user_id}"
     try:
         user_data = await blitz.get_user(username)
         
         if user_data is None:
-            logger.warning(f"User {username} not found in Blitz; removing local subscription")
-            active_subscriptions.pop(user_id, None)
-            save_subscriptions()
+            logger.warning(f"User {username} not found in Blitz; deleting from DB")
+            await delete_subscription(user_id)
             return False
         
         logger.info(f"User {username} API data: {user_data}")
+        
+        # Получаем текущую подписку из БД
+        current_sub = await get_subscription(user_id)
+        if not current_sub:
+            logger.warning(f"Subscription for {user_id} not in DB during sync")
+            return False
+        
+        # Обновляем expiry_date
         if 'expires_at' in user_data:
             expires_at_str = user_data.get('expires_at')
             if expires_at_str:
                 new_expiry = datetime.fromisoformat(expires_at_str.replace('Z', '+00:00'))
                 if new_expiry.tzinfo is None:
                     new_expiry = new_expiry.replace(tzinfo=timezone.utc)
-                active_subscriptions[user_id]['expiry_date'] = new_expiry
-                logger.info(f"Updated subscription for user {user_id}: expiry_date from expires_at {new_expiry}")
             else:
                 logger.warning(f"expires_at is empty for user {username}")
+                new_expiry = current_sub['expiry_date']
         else:
             expiration_days = user_data.get('expiration_days', 0)
             new_expiry = datetime.now(timezone.utc) + timedelta(days=expiration_days)
-            active_subscriptions[user_id]['expiry_date'] = new_expiry
-            logger.info(f"Updated subscription for user {user_id}: expiry_date {new_expiry}, expiration_days: {expiration_days}")
-        if 'traffic_limit' in user_data:
-            active_subscriptions[user_id]['traffic_gb'] = user_data.get('traffic_limit', 0)
-        save_subscriptions()
+        
+        traffic_gb = user_data.get('traffic_limit', current_sub.get('traffic_gb', 0))
+        
+        # Сохраняем в БД
+        await save_subscription(
+            user_id=user_id,
+            blitz_username=username,
+            vpn_uri=current_sub['vpn_uri'],
+            expiry_date=new_expiry,
+            traffic_gb=traffic_gb,
+            promo_code=current_sub.get('promo_code')
+        )
+        
+        logger.info(f"Updated subscription in DB for user {user_id}: expiry={new_expiry}")
         return await update_user_key_from_api(user_id)
+        
     except Exception as e:
         logger.error(f"Error updating subscription for user {user_id}: {e}")
         return False
@@ -627,31 +693,27 @@ async def sync_users_with_panel():
   """Периодическая синхронизация пользователей с Blitz панелью"""
   while True:
     try:
-      await asyncio.sleep(30)  # Проверка каждые 5 минут
+      await asyncio.sleep(30)  # Проверка каждые 30 секунд
       
       logger.info("Starting periodic sync with Blitz panel...")
       
-      # Проверяем каждого активного пользователя
+      # Получаем все активные подписки из БД
+      subscriptions = await get_all_subscriptions()
       updated_count = 0
-      for user_id in list(active_subscriptions.keys()):
+      
+      for user_id in subscriptions.keys():
         username = f"vpn_{user_id}"
         user_data = await blitz.get_user(username)
         
         if user_data is None:
-          # API панели не вернуло пользователя - НЕ УДАЛЯЕМ, просто логируем
-          logger.warning(f"User {username} (ID: {user_id}) not found in panel API (may be API issue)")
-          # Не удаляем пользователя, т.к. это может быть проблема с API панели
+          logger.warning(f"User {username} (ID: {user_id}) not found in panel API")
           continue
         else:
           # Обновляем данные пользователя из панели
           await update_subscription_from_api(user_id)
           updated_count += 1
       
-      if updated_count > 0:
-        save_subscriptions()
-        logger.info(f"Updated {updated_count} subscriptions from panel")
-      
-      logger.info(f"Sync completed. Active subscriptions: {len(active_subscriptions)}")
+      logger.info(f"Sync completed. Updated {updated_count} subscriptions")
       
     except Exception as e:
       logger.error(f"Error in sync_users_with_panel: {e}")

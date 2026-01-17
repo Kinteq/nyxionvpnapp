@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 active_subscriptions = {}
 crypto_pay_api_token = os.getenv("CRYPTO_PAY_TOKEN", "513647:AAv2qN58YYe5pKqg2LFYFCE2sS6JKp6DcQT")
 
-DB_DSN = os.getenv("DATABASE_URL", "postgresql://nyxion_vpn:nyxion_vpn_pass@localhost/nyxion_vpn")
+# Normalize DATABASE_URL for asyncpg (accepts postgresql://, not postgresql+asyncpg://)
+_raw_dsn = os.getenv("DATABASE_URL", "postgresql://nyxion_vpn:nyxion_vpn_pass@localhost/nyxion_vpn")
+DB_DSN = _raw_dsn.replace("postgresql+asyncpg://", "postgresql://")
 
 # Загружаем pending_invoices из файла при старте
 pending_invoices = {}
