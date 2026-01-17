@@ -20,6 +20,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useThemeContext() {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
+    // На сервере или вне провайдера возвращаем дефолт
+    if (typeof window === 'undefined') {
+      return {
+        theme: 'system' as ThemeMode,
+        resolvedTheme: 'light' as const,
+        isDark: false,
+        setTheme: () => {},
+      };
+    }
     throw new Error('useThemeContext must be used within ThemeProvider');
   }
   return ctx;

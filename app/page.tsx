@@ -6,6 +6,8 @@ import Header from '@/components/Header';
 import SubscriptionCard from '@/components/SubscriptionCard';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface SubscriptionData {
   isActive: boolean;
   expiryDate?: string;

@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-dynamic';
+
 interface KeyData {
   vpnUri: string;
   expiryDate: string;

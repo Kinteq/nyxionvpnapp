@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Navigation from '@/components/Navigation';
 
+export const dynamic = 'force-dynamic';
+
 export default function BuyPage() {
   const [selectedMethod, setSelectedMethod] = useState<'cryptobot' | 'yukassa'>('cryptobot');
   const [selectedAsset, setSelectedAsset] = useState<'USDT' | 'TON' | 'BTC'>('USDT');

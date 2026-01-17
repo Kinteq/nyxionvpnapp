@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Navigation from '@/components/Navigation';
 import { motion } from 'framer-motion';
 
+export const dynamic = 'force-dynamic';
+
 export default function GuidePage() {
   const steps = [
     {
