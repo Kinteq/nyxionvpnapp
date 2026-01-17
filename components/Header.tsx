@@ -58,11 +58,7 @@ export default function Header({ user }: HeaderProps) {
   const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '🌞' : '🌙';
 
   return (
-    <motion.header
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-nyxion-gradient px-4 py-4 text-white shadow-md"
-    >
+      <header className="bg-nyxion-gradient dark:bg-gradient-to-br dark:from-blueGray-800 dark:to-blueGray-900 px-4 py-4 text-white shadow-md transition-colors">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white/25 border border-white/40 overflow-hidden flex items-center justify-center text-lg shadow-inner">
@@ -87,6 +83,6 @@ export default function Header({ user }: HeaderProps) {
           <span className="text-xs opacity-70">{resolvedTheme === 'dark' ? 'dark' : 'light'}</span>
         </button>
       </div>
-    </motion.header>
+       </header>
   );
 }
