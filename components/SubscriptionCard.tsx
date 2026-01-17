@@ -41,8 +41,9 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
   const copyToClipboard = () => {
     if (subscription.vpnUri) {
       navigator.clipboard.writeText(subscription.vpnUri);
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.showPopup({
+      const w: any = typeof window !== 'undefined' ? (window as any) : undefined;
+      if (w?.Telegram?.WebApp) {
+        w.Telegram.WebApp.showPopup({
           title: "Скопировано!",
           message: "VPN ключ скопирован в буфер обмена",
           buttons: [{ type: "ok" }],
