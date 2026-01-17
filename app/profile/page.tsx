@@ -80,7 +80,7 @@ export default function ProfilePage() {
       transition={{ duration: 0.24 }}
     >
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4">👤 Профиль</h1>
+        <h1 className="text-2xl font-bold mb-4 text-textDark dark:text-white">👤 Профиль</h1>
 
         {loading ? (
           <motion.div
@@ -88,8 +88,8 @@ export default function ProfilePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-          >
-            <div className="text-textLight">Загрузка...</div>
+            >
+              <div className="text-textLight dark:text-blueGray-200">Загрузка...</div>
           </motion.div>
         ) : (
           <div className="space-y-4">
@@ -102,18 +102,18 @@ export default function ProfilePage() {
               <h2 className="font-semibold mb-3">👋 Личная информация</h2>
               {profile?.id ? (
                 <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="text-textLight">ID пользователя:</span> {profile.id}
-                  </p>
+                    <p>
+                      <span className="text-textLight dark:text-blueGray-200">ID пользователя:</span> {profile.id}
+                    </p>
                   {profile.firstName && (
                     <p>
-                      <span className="text-textLight">Имя:</span> {profile.firstName}
+                        <span className="text-textLight dark:text-blueGray-200">Имя:</span> {profile.firstName}
                       {profile.lastName && ` ${profile.lastName}`}
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-textLight text-sm">
+                  <p className="text-textLight dark:text-blueGray-200 text-sm">
                   Откройте Mini App через Telegram для отображения вашего профиля
                 </p>
               )}
@@ -127,20 +127,20 @@ export default function ProfilePage() {
               transition={{ duration: 0.22, delay: 0.05 }}
             >
               <h2 className="font-semibold mb-3">📱 Мои устройства</h2>
-              <p className="text-textLight text-sm mb-3">
+              <p className="text-textLight dark:text-blueGray-200 text-sm mb-3">
                 Подключенные устройства (макс. 3):
               </p>
               {loadingDevices ? (
-                <div className="text-center py-4 text-textLight">Загрузка...</div>
+                <div className="text-center py-4 text-textLight dark:text-blueGray-200">Загрузка...</div>
               ) : devices.length > 0 ? (
                 <div className="space-y-2">
                   {devices.map((device, idx) => (
                     <div key={idx} className="p-3 bg-gray-800/30 rounded-lg border border-gray-700">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <p className="text-xs text-textLight break-all">{device.device_id}</p>
-                          <p className="text-xs text-gray-500 mt-1">IP: {device.ip}</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-textLight dark:text-blueGray-200 break-all">{device.device_id}</p>
+                          <p className="text-xs text-gray-500 dark:text-blueGray-300 mt-1">IP: {device.ip}</p>
+                          <p className="text-xs text-gray-500 dark:text-blueGray-300">
                             Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
                           </p>
                         </div>
@@ -154,8 +154,8 @@ export default function ProfilePage() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-textLight text-sm text-center py-4">
+                ) : (
+                  <p className="text-textLight dark:text-blueGray-200 text-sm text-center py-4">
                   Нет подключенных устройств
                 </p>
               )}
@@ -168,7 +168,7 @@ export default function ProfilePage() {
               transition={{ duration: 0.22, delay: 0.1 }}
             >
               <h2 className="font-semibold mb-3">📄 Пользовательское соглашение</h2>
-              <div className="space-y-2 text-sm text-textLight">
+                <div className="space-y-2 text-sm text-textLight dark:text-blueGray-200">
                 <p>Используя Nyxion VPN, вы подтверждаете согласие со следующими условиями:</p>
                 <ul className="list-disc list-inside space-y-1">
                   <li>Не используйте сервис для незаконной деятельности.</li>
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                   <li>Мы не храним логи вашей активности в сети.</li>
                   <li>Поддержка доступна 24/7, пишите при любых проблемах.</li>
                 </ul>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Последнее обновление: январь 2026</p>
+                  <p className="text-xs text-gray-500 dark:text-blueGray-300">Последнее обновление: январь 2026</p>
               </div>
             </motion.div>
 
@@ -188,13 +188,13 @@ export default function ProfilePage() {
             >
               <h2 className="font-semibold mb-3">🔗 Быстрые ссылки</h2>
               <div className="space-y-2">
-                <a href="/guide" className="block p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:border-blue-400 transition-colors">
+                <a href="/guide" className="block p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:border-blue-400 transition-colors text-textDark dark:text-white">
                   <div className="font-semibold">📘 Инструкция</div>
-                  <div className="text-xs text-textLight">Как подключиться к VPN</div>
+                  <div className="text-xs text-textLight dark:text-blueGray-200">Как подключиться к VPN</div>
                 </a>
-                <a href="/buy" className="block p-3 bg-green-500/10 rounded-lg border border-green-500/20 hover:border-green-400 transition-colors">
+                <a href="/buy" className="block p-3 bg-green-500/10 rounded-lg border border-green-500/20 hover:border-green-400 transition-colors text-textDark dark:text-white">
                   <div className="font-semibold">💳 Купить подписку</div>
-                  <div className="text-xs text-textLight">Активировать доступ VPN</div>
+                  <div className="text-xs text-textLight dark:text-blueGray-200">Активировать доступ VPN</div>
                 </a>
               </div>
             </motion.div>
@@ -205,8 +205,8 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, delay: 0.15 }}
             >
-              <h2 className="font-semibold mb-3">❓ Поддержка</h2>
-              <p className="text-textLight text-sm mb-3">Возникли проблемы? Свяжитесь с нами:</p>
+                <h2 className="font-semibold mb-3">❓ Поддержка</h2>
+                <p className="text-textLight dark:text-blueGray-200 text-sm mb-3">Возникли проблемы? Свяжитесь с нами:</p>
               <button className="w-full p-3 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:border-orange-400 transition-colors font-semibold text-sm">
                 💬 Написать в поддержку
               </button>

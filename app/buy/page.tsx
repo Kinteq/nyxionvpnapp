@@ -114,7 +114,7 @@ export default function BuyPage() {
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <div className="font-bold text-lg">💎 CryptoBot</div>
-                  <div className="text-sm text-textLight">Криптовалюта (USDT, TON, BTC)</div>
+                  <div className="text-sm text-textLight dark:text-blueGray-200">Криптовалюта (USDT, TON, BTC)</div>
                 </div>
                 {selectedMethod === 'cryptobot' && <span className="text-accent text-2xl">✓</span>}
               </div>
@@ -131,7 +131,7 @@ export default function BuyPage() {
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <div className="font-bold text-lg">💳 ЮКасса</div>
-                  <div className="text-sm text-textLight">Банковские карты (скоро)</div>
+                  <div className="text-sm text-textLight dark:text-blueGray-200">Банковские карты (скоро)</div>
                 </div>
                 {selectedMethod === 'yukassa' && <span className="text-accent text-2xl">✓</span>}
               </div>

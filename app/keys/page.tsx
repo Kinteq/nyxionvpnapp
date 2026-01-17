@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import Header from '@/components/Header';
-import Navigation from '@/components/Navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,14 +41,13 @@ export default function KeysPage() {
 
   return (
     <motion.main
-      className="min-h-screen pb-20"
+      className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark transition-colors"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
     >
-      <Header />
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4">🔑 Мои ключи</h1>
+        <h1 className="text-2xl font-bold mb-4 text-textDark dark:text-white">🔑 Мои ключи</h1>
 
         {loading ? (
           <motion.div
@@ -68,11 +65,11 @@ export default function KeysPage() {
             transition={{ duration: 0.22 }}
           >
             <h2 className="font-semibold mb-3">✅ Активная подписка</h2>
-            <p className="text-sm text-textLight mb-3">
+            <p className="text-sm text-textLight dark:text-blueGray-200 mb-3">
               Истекает: {keys.expiryDate} ({keys.daysLeft} дней)
             </p>
-            <div className="bg-gray-800/50 rounded-lg p-3 mb-4">
-              <p className="text-xs font-mono break-all text-green-400">
+            <div className="bg-gray-100 dark:bg-blueGray-900 rounded-lg p-3 mb-4 border border-borderLight dark:border-borderDark">
+              <p className="text-xs font-mono break-all text-green-600 dark:text-green-300">
                 {keys.vpnUri}
               </p>
             </div>
@@ -94,17 +91,16 @@ export default function KeysPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-textLight mb-4">У вас нет активной подписки</p>
+            <p className="text-textLight dark:text-blueGray-200 mb-4">У вас нет активной подписки</p>
             <a
               href="/buy"
-              className="inline-block px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-colors"
+              className="inline-block px-6 py-2 bg-coral hover:bg-peach text-white rounded-lg font-semibold transition-colors"
             >
               💳 Купить подписку
             </a>
           </motion.div>
         )}
       </div>
-      <Navigation />
     </motion.main>
   );
 }
