@@ -3,32 +3,164 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --theme-transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
   body {
-    @apply bg-background text-textDark transition-colors duration-300;
-    @apply dark:bg-surfaceDark dark:text-gray-100;
+    @apply bg-background text-textDark;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    transition: background-color var(--theme-transition), color var(--theme-transition);
+  }
+  
+  body.dark {
+    @apply bg-surfaceDark text-gray-100;
+  }
+
+  *, *::before, *::after {
+    transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
   }
 }
 
 @layer components {
+  /* Базовая кнопка с ripple эффектом */
   .btn {
-    @apply px-4 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-lg;
-    @apply bg-nyxion-gradient text-white border border-transparent dark:shadow-none;
+    @apply px-4 py-3 rounded-xl font-semibold shadow-md;
+    @apply bg-nyxion-gradient text-white border border-transparent;
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+  }
+  
+  .btn:active::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px -5px rgba(255, 154, 139, 0.4);
+  }
+  
+  .btn:active {
+    transform: translateY(0) scale(0.98);
   }
 
+  /* Primary кнопка */
   .btn-primary {
-    @apply px-6 py-3 bg-nyxion-gradient text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5;
-    @apply dark:shadow-none dark:hover:shadow-lg;
+    @apply px-6 py-3 bg-nyxion-gradient text-white font-semibold rounded-xl shadow-lg;
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease-out, height 0.5s ease-out;
+  }
+  
+  .btn-primary:active::before {
+    width: 400px;
+    height: 400px;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 15px 35px -5px rgba(255, 154, 139, 0.5);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: 0 5px 15px -5px rgba(255, 154, 139, 0.4);
+  }
+  
+  .dark .btn-primary {
+    box-shadow: 0 10px 30px -5px rgba(255, 154, 139, 0.3);
+  }
+  
+  .dark .btn-primary:hover {
+    box-shadow: 0 15px 40px -5px rgba(255, 154, 139, 0.4);
+  }
+
+  /* Secondary кнопка */
   .btn-secondary {
-    @apply px-6 py-3 bg-white text-navy font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border-2 border-gray-200;
-    @apply dark:bg-cardDark dark:text-gray-100 dark:border-borderDark;
+    @apply px-6 py-3 bg-white text-navy font-semibold rounded-xl shadow-md border-2 border-gray-200;
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  .btn-secondary::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 154, 139, 0.15);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.5s ease-out, height 0.5s ease-out;
+  }
+  
+  .btn-secondary:active::before {
+    width: 400px;
+    height: 400px;
+  }
+  
+  .btn-secondary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+    border-color: #FF9A8B;
+  }
+  
+  .btn-secondary:active {
+    transform: translateY(0) scale(0.97);
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-cardDark text-gray-100 border-borderDark;
+    box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .btn-secondary:hover {
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+    border-color: #FF9A8B;
+  }
+
+  /* Card */
   .card {
     @apply bg-white rounded-2xl shadow-lg p-6 backdrop-blur-sm border border-gray-100;
-    @apply dark:bg-cardDark dark:border-borderDark dark:shadow-none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .dark .card {
+    @apply bg-cardDark border-borderDark;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.5);
   }
   
   .gradient-text {
@@ -36,8 +168,69 @@
   }
 
   .input-base {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-textDark placeholder:text-textLight transition-colors;
-    @apply focus:outline-none focus:border-coral;
-    @apply dark:bg-cardDark dark:border-borderDark dark:text-gray-100 dark:placeholder:text-gray-500;
+    @apply w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-textDark placeholder:text-textLight;
+    @apply focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral/20;
+    transition: all 0.3s ease;
+  }
+  
+  .dark .input-base {
+    @apply bg-cardDark border-borderDark text-gray-100 placeholder:text-gray-500;
+  }
+
+  /* Переключатель темы */
+  .theme-toggle {
+    @apply relative flex items-center gap-2 px-3 py-2 rounded-full;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+  
+  .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+  }
+  
+  .theme-toggle:active {
+    transform: scale(0.95);
+  }
+  
+  .theme-toggle-icon {
+    @apply text-xl;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .theme-toggle:hover .theme-toggle-icon {
+    transform: rotate(20deg) scale(1.1);
+  }
+
+  /* Анимации */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(255, 154, 139, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 35px rgba(255, 154, 139, 0.6);
+    }
+  }
+  
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
   }
 }

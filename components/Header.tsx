@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeContext } from './ThemeProvider';
 
 type TgUser = {
@@ -19,6 +19,8 @@ interface HeaderProps {
 export default function Header({ user }: HeaderProps) {
   const { theme, resolvedTheme, setTheme } = useThemeContext();
   const [internalUser, setInternalUser] = useState<TgUser | null>(user ?? null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -50,39 +52,96 @@ export default function Header({ user }: HeaderProps) {
   }, [internalUser]);
 
   const cycleTheme = () => {
+    setIsTransitioning(true);
     const next = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system';
-    setTheme(next);
+    
+    setTimeout(() => {
+      setTheme(next);
+      setTimeout(() => setIsTransitioning(false), 500);
+    }, 150);
   };
 
-  const themeLabel = theme === 'system' ? 'Авто' : theme === 'light' ? 'Светлая' : 'Тёмная';
-  const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '🌞' : '🌙';
+  const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '☀️' : '🌙';
+
+  const iconVariants = {
+    initial: { scale: 0, rotate: -180, opacity: 0 },
+    animate: { scale: 1, rotate: 0, opacity: 1 },
+    exit: { scale: 0, rotate: 180, opacity: 0 }
+  };
 
   return (
-      <header className="bg-nyxion-gradient dark:bg-gradient-to-br dark:from-blueGray-800 dark:to-blueGray-900 px-4 py-4 text-white shadow-md transition-colors">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white/25 border border-white/40 overflow-hidden flex items-center justify-center text-lg shadow-inner">
-            {avatar.type === 'image' ? (
-              <img src={avatar.value} alt={displayName} className="w-full h-full object-cover" />
-            ) : (
-              <span className="font-bold">{avatar.value}</span>
-            )}
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wide opacity-80">Nyxion VPN</p>
-            <h1 className="text-lg font-semibold leading-tight">{displayName}</h1>
-          </div>
-        </div>
+    <>
+      {/* Theme transition overlay */}
+      <AnimatePresence>
+        {isTransitioning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-50 pointer-events-none"
+            style={{
+              background: resolvedTheme === 'dark' 
+                ? 'radial-gradient(circle at 90% 10%, rgba(248,249,250,0.5) 0%, transparent 50%)'
+                : 'radial-gradient(circle at 90% 10%, rgba(11,18,32,0.5) 0%, transparent 50%)'
+            }}
+          />
+        )}
+      </AnimatePresence>
 
-        <button
-          onClick={cycleTheme}
-          className="flex items-center gap-2 px-3 py-2 bg-white/15 hover:bg-white/25 text-white rounded-lg border border-white/20 transition-colors"
-        >
-          <span>{themeIcon}</span>
-          <span className="text-sm font-semibold">{themeLabel}</span>
-          <span className="text-xs opacity-70">{resolvedTheme === 'dark' ? 'dark' : 'light'}</span>
-        </button>
-      </div>
-       </header>
+      <header className="bg-nyxion-gradient dark:bg-gradient-to-br dark:from-blueGray-800 dark:to-blueGray-900 px-4 py-4 text-white shadow-md transition-all duration-500">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-12 h-12 rounded-full bg-white/25 border border-white/40 overflow-hidden flex items-center justify-center text-lg shadow-inner"
+            >
+              {avatar.type === 'image' ? (
+                <img src={avatar.value} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-bold">{avatar.value}</span>
+              )}
+            </motion.div>
+            <div>
+              <p className="text-xs uppercase tracking-wide opacity-80">Nyxion VPN</p>
+              <h1 className="text-lg font-semibold leading-tight">{displayName}</h1>
+            </div>
+          </div>
+
+          <motion.button
+            ref={buttonRef}
+            onClick={cycleTheme}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            className="theme-toggle relative"
+          >
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={theme}
+                variants={iconVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+                className="theme-toggle-icon inline-block"
+              >
+                {themeIcon}
+              </motion.span>
+            </AnimatePresence>
+            <motion.span 
+              className="text-sm font-medium ml-1"
+              layout
+            >
+              {theme === 'system' ? 'Авто' : theme === 'light' ? 'День' : 'Ночь'}
+            </motion.span>
+          </motion.button>
+        </div>
+      </header>
+    </>
   );
 }
