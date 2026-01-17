@@ -12,9 +12,9 @@ const PLANS = [
     name: '1 месяц',
     days: 30,
     price: 150,
-    priceUSDT: 1.5,
-    priceTON: 0.5,
-    priceBTC: 0.000015,
+    priceUSDT: 1.93,
+    priceTON: 1.11,
+    priceBTC: 0.00002,
     popular: false,
     discount: null,
   },
@@ -23,9 +23,9 @@ const PLANS = [
     name: '3 месяца',
     days: 90,
     price: 390,
-    priceUSDT: 4.0,
-    priceTON: 1.3,
-    priceBTC: 0.00004,
+    priceUSDT: 5.01,
+    priceTON: 2.89,
+    priceBTC: 0.000053,
     popular: true,
     discount: 13,
   },
@@ -34,9 +34,9 @@ const PLANS = [
     name: '6 месяцев',
     days: 180,
     price: 690,
-    priceUSDT: 7.0,
-    priceTON: 2.3,
-    priceBTC: 0.00007,
+    priceUSDT: 8.86,
+    priceTON: 5.11,
+    priceBTC: 0.000093,
     popular: false,
     discount: 23,
   },
@@ -45,9 +45,9 @@ const PLANS = [
     name: '1 год',
     days: 365,
     price: 1190,
-    priceUSDT: 12.0,
-    priceTON: 4.0,
-    priceBTC: 0.00012,
+    priceUSDT: 15.28,
+    priceTON: 8.81,
+    priceBTC: 0.00016,
     popular: false,
     discount: 34,
   },
@@ -167,7 +167,7 @@ export default function BuyPage() {
               </div>
             </button>
             <button onClick={() => setSelectedMethod('yukassa')}
-              className={`w-full p-4 rounded-xl border-2 transition-all ${
+              className={`w-full p-4 rounded-xl border-2 transition-all opacity-60 ${
                 selectedMethod === 'yukassa' ? 'border-coral bg-coral/10 shadow-lg shadow-coral/30' : 'border-borderLight dark:border-borderDark hover:border-coral'
               }`}
             >
