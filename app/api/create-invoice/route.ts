@@ -5,7 +5,7 @@ const VPS_API_URL = 'http://62.60.217.189:3333';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, method, asset, amount } = body;
+    const { userId, method, asset, amount, days, plan } = body;
 
     if (!userId) {
       return NextResponse.json(
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Прокси запрос к VPS API
+    // Прокси запрос к VPS API - передаём ВСЕ параметры включая days и plan
     const response = await fetch(`${VPS_API_URL}/api/create-invoice`, {
       method: 'POST',
       headers: {
@@ -25,6 +25,8 @@ export async function POST(request: Request) {
         method: method || 'cryptobot',
         asset: asset || 'USDT',
         amount: amount || 2.0,
+        days: days || 30,
+        plan: plan || 'month1',
       }),
     });
 
