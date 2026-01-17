@@ -166,6 +166,24 @@ def register_device(user_id, device_id, ip_address):
     logger.info(f"New device registered for user {user_id}: {device_id} from {ip_address}")
     return True, "Device registered"
 
+async def fetch_user_from_blitz(username: str) -> dict:
+    """Получить свежие данные пользователя из Blitz Panel напрямую"""
+    if not blitz_api:
+        return None
+    try:
+        user_data = await blitz_api.get_user(username)
+        if user_data:
+            return {
+                "username": user_data.get("username"),
+                "expiration_days": user_data.get("expiration_days", 0),
+                "traffic_limit": user_data.get("traffic_limit", 0),
+                "created_at": user_data.get("created_at"),
+                "uri": user_data.get("uri")
+            }
+    except Exception as e:
+        logger.warning(f"Could not fetch user {username} from Blitz: {e}")
+    return None
+
 async def handle_subscription_api(req):
     try:
         uid = int(req.rel_url.query.get("userId", 0))
@@ -185,9 +203,33 @@ async def handle_subscription_api(req):
                 "deviceLimitReached": True
             })
         
-        exp = sub.get("expiry_date")
-        if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
-        if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+        # Получаем свежие данные из Blitz Panel если есть username
+        blitz_username = sub.get("blitz_username")
+        blitz_data = None
+        if blitz_username:
+            blitz_data = await fetch_user_from_blitz(blitz_username)
+        
+        # Если удалось получить из Blitz, используем свежие данные; иначе из памяти
+        if blitz_data:
+            exp_days = blitz_data.get("expiration_days", 0)
+            # Вычисляем дату истечения на основе дней
+            created_at = blitz_data.get("created_at")
+            if isinstance(created_at, str):
+                try:
+                    created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                except:
+                    created_dt = datetime.now(timezone.utc)
+            else:
+                created_dt = datetime.now(timezone.utc)
+            exp = created_dt + timedelta(days=exp_days)
+            vpn_uri = blitz_data.get("uri") or sub.get("vpn_uri", "")
+        else:
+            # Используем данные из памяти
+            exp = sub.get("expiry_date")
+            if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+            if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+            vpn_uri = sub.get("vpn_uri", "")
+        
         is_act = (exp - datetime.now(timezone.utc)).total_seconds() > 0
         
         devices_count = len(user_devices.get(uid, []))
@@ -196,12 +238,13 @@ async def handle_subscription_api(req):
             "isActive": is_act, 
             "expiryDate": exp.strftime("%d.%m.%Y"), 
             "daysLeft": calculate_days_left(exp), 
-            "vpnUri": sub.get("vpn_uri", ""), 
+            "vpnUri": vpn_uri, 
             "trafficGb": sub.get("traffic_gb", 0),
             "devicesCount": devices_count,
             "maxDevices": MAX_DEVICES_PER_USER
         })
-    except: 
+    except Exception as e:
+        logger.error(f"Subscription API error: {e}")
         return web.json_response({"error": "Error"}, status=500)
 
 async def handle_user_api(req):
@@ -209,12 +252,41 @@ async def handle_user_api(req):
         uid = int(req.rel_url.query.get("userId", 0))
         sub = active_subscriptions.get(uid)
         if not sub: return web.json_response({"id": uid, "hasSubscription": False})
-        exp = sub.get("expiry_date")
-        if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
-        if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+        
+        # Получаем свежие данные из Blitz Panel если есть username
+        blitz_username = sub.get("blitz_username")
+        blitz_data = None
+        if blitz_username:
+            blitz_data = await fetch_user_from_blitz(blitz_username)
+        
+        # Если удалось получить из Blitz, используем свежие данные; иначе из памяти
+        if blitz_data:
+            exp_days = blitz_data.get("expiration_days", 0)
+            created_at = blitz_data.get("created_at")
+            if isinstance(created_at, str):
+                try:
+                    created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                except:
+                    created_dt = datetime.now(timezone.utc)
+            else:
+                created_dt = datetime.now(timezone.utc)
+            exp = created_dt + timedelta(days=exp_days)
+        else:
+            exp = sub.get("expiry_date")
+            if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+            if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+        
         is_act = (exp - datetime.now(timezone.utc)).total_seconds() > 0
-        return web.json_response({"id": uid, "hasSubscription": True, "isActive": is_act, "expiryDate": exp.strftime("%d.%m.%Y"), "daysLeft": calculate_days_left(exp)})
-    except: return web.json_response({"error": "Error"}, status=500)
+        return web.json_response({
+            "id": uid, 
+            "hasSubscription": True, 
+            "isActive": is_act, 
+            "expiryDate": exp.strftime("%d.%m.%Y"), 
+            "daysLeft": calculate_days_left(exp)
+        })
+    except Exception as e:
+        logger.error(f"User API error: {e}")
+        return web.json_response({"error": "Error"}, status=500)
 
 async def handle_keys_api(req):
     """Получить VPN ключи пользователя"""
@@ -224,13 +296,45 @@ async def handle_keys_api(req):
         if not sub or not sub.get("vpn_uri"):
             return web.json_response({"keys": []})
         
+        # Получаем свежие данные из Blitz Panel если есть username
+        blitz_username = sub.get("blitz_username")
+        blitz_data = None
+        vpn_uri = sub.get("vpn_uri", "")
+        
+        if blitz_username:
+            blitz_data = await fetch_user_from_blitz(blitz_username)
+            if blitz_data:
+                vpn_uri = blitz_data.get("uri") or vpn_uri
+                exp_days = blitz_data.get("expiration_days", 0)
+                created_at = blitz_data.get("created_at")
+                if isinstance(created_at, str):
+                    try:
+                        created_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    except:
+                        created_dt = datetime.now(timezone.utc)
+                else:
+                    created_dt = datetime.now(timezone.utc)
+                expiry_date = created_dt + timedelta(days=exp_days)
+            else:
+                expiry_date = sub.get("expiry_date")
+                if isinstance(expiry_date, str): 
+                    expiry_date = datetime.fromisoformat(expiry_date.replace("Z", "+00:00"))
+                if isinstance(expiry_date, datetime) and expiry_date.tzinfo is None: 
+                    expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+        else:
+            expiry_date = sub.get("expiry_date")
+            if isinstance(expiry_date, str): 
+                expiry_date = datetime.fromisoformat(expiry_date.replace("Z", "+00:00"))
+            if isinstance(expiry_date, datetime) and expiry_date.tzinfo is None: 
+                expiry_date = expiry_date.replace(tzinfo=timezone.utc)
+        
         # Возвращаем список ключей
         return web.json_response({
             "keys": [{
                 "id": 1,
-                "uri": sub.get("vpn_uri", ""),
+                "uri": vpn_uri,
                 "name": "Hysteria VPN Key",
-                "expiryDate": sub.get("expiry_date").strftime("%d.%m.%Y") if hasattr(sub.get("expiry_date"), 'strftime') else sub.get("expiry_date"),
+                "expiryDate": expiry_date.strftime("%d.%m.%Y") if hasattr(expiry_date, 'strftime') else expiry_date,
                 "isActive": True
             }]
         })
@@ -245,7 +349,17 @@ async def handle_subscription_text_api(req):
         sub = active_subscriptions.get(uid)
         if not sub or not sub.get("vpn_uri"):
             return web.Response(text="", content_type="text/plain; charset=utf-8")
-        content = sub.get("vpn_uri", "").strip() + "\n"
+        
+        # Получаем свежие данные из Blitz Panel если есть username
+        blitz_username = sub.get("blitz_username")
+        vpn_uri = sub.get("vpn_uri", "")
+        
+        if blitz_username:
+            blitz_data = await fetch_user_from_blitz(blitz_username)
+            if blitz_data:
+                vpn_uri = blitz_data.get("uri") or vpn_uri
+        
+        content = vpn_uri.strip() + "\n"
         return web.Response(text=content, content_type="text/plain; charset=utf-8")
     except Exception as e:
         logger.error(f"Subscription text API error: {e}")

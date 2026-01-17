@@ -627,7 +627,7 @@ async def sync_users_with_panel():
   """Периодическая синхронизация пользователей с Blitz панелью"""
   while True:
     try:
-      await asyncio.sleep(300)  # Проверка каждые 5 минут
+      await asyncio.sleep(30)  # Проверка каждые 5 минут
       
       logger.info("Starting periodic sync with Blitz panel...")
       
@@ -667,10 +667,7 @@ blitz = BlitzAPI(BLITZ_API_URL, BLITZ_API_TOKEN)
 
 def get_main_keyboard() -> InlineKeyboardMarkup:
   return InlineKeyboardMarkup(inline_keyboard=[
-      [InlineKeyboardButton(text="� Открыть приложение", web_app=types.WebAppInfo(url="https://nyxionvpnapp.vercel.app"))],
-      [InlineKeyboardButton(text="�💳 Купить VPN", callback_data="buy_vpn")],
-      [InlineKeyboardButton(text="📊 Мой профиль", callback_data="my_profile")],
-      [InlineKeyboardButton(text="ℹ️ Помощь", callback_data="help")]
+      [InlineKeyboardButton(text="� Открыть приложение", web_app=types.WebAppInfo(url="https://nyxionvpnapp.vercel.app"))]
       ])
 
 def get_admin_keyboard() -> InlineKeyboardMarkup:
@@ -722,25 +719,9 @@ async def cmd_admin(message: types.Message):
 
 @dp.callback_query(F.data == "buy_vpn")
 async def buy_vpn(callback: types.CallbackQuery):
-  """Покупка VPN"""
-  logger.info("Buy VPN called")
-  traffic_text = "Безлимит" if VPN_TRAFFIC_GB == 0 else f"{VPN_TRAFFIC_GB} GB"
-
-  keyboard = InlineKeyboardMarkup(inline_keyboard=[
-    [InlineKeyboardButton(text="💎 Оплатить криптой", callback_data="pay_crypto")],
-    [InlineKeyboardButton(text="« Назад", callback_data="back_main")]
-  ])
-
-  await callback.message.edit_text(
-    f"💳 <b>Покупка VPN доступа</b>\n\n"
-    f"💰 Цены: ~150 RUB\n"
-    f"📶 Трафик: {traffic_text}\n"
-    f"⏰ Период: {VPN_DAYS} дней\n\n"
-    f"Нажмите кнопку для оплаты:",
-    parse_mode="HTML",
-    reply_markup=keyboard
-  )
-  await callback.answer()
+  """Покупка VPN (в Mini App)"""
+  await callback.answer("Откройте приложение для покупки VPN", show_alert=False)
+  await callback.message.delete()
 
 
 @dp.callback_query(F.data == "pay_crypto")
@@ -1247,20 +1228,9 @@ async def show_key(callback: types.CallbackQuery):
 
 @dp.callback_query(F.data == "help")
 async def help_handler(callback: types.CallbackQuery):
-  """Помощь"""
-  await callback.message.edit_text(
-    "ℹ️ <b>Помощь</b>\n\n"
-    "<b>Как купить:</b>\n"
-    "1. Нажмите 'Купить VPN'\n"
-    "2. Оплатите в USDT\n"
-    "3. Получите ключ\n\n"
-    "<b>Поддержка:</b> @your_support",
-    parse_mode="HTML",
-    reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-      [InlineKeyboardButton(text="« Назад", callback_data="back_main")]
-    ])
-  )
-  await callback.answer()
+  """Помощь (в Mini App)"""
+  await callback.answer("Откройте приложение для справки", show_alert=False)
+  await callback.message.delete()
 
 @dp.callback_query(F.data == "admin_stats")
 async def admin_stats(callback: types.CallbackQuery):
@@ -1395,45 +1365,9 @@ async def cancel_payment(callback: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "my_profile")
 async def my_profile(callback: types.CallbackQuery):
-  """Профиль пользователя"""
-  user_id = callback.from_user.id
-  
-  if user_id in active_subscriptions:
-    sub = active_subscriptions[user_id]
-    expiry_date = sub['expiry_date']
-    
-    days_left = calculate_days_left(expiry_date)
-    traffic_text = "Безлимит" if sub.get('traffic_gb', 0) == 0 else f"{sub.get('traffic_gb', 0)} GB"
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-      [InlineKeyboardButton(text="🔑 Мои ключи", callback_data="my_keys")],
-      [InlineKeyboardButton(text="« Назад", callback_data="back_main")]
-    ])
-
-    await callback.message.edit_text(
-      f"📊 <b>Ваш профиль</b>\n\n"
-      f"⏰ Дней осталось: {days_left}\n"
-      f"📶 Трафик: {traffic_text}\n"
-      f"📅 До: {format_expiry_date(expiry_date)}\n\n"
-      f"Выберите действие:",
-      parse_mode="HTML",
-      reply_markup=keyboard
-    )
-  else:
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-      [InlineKeyboardButton(text="💳 Купить VPN", callback_data="buy_vpn")],
-      [InlineKeyboardButton(text="« Назад", callback_data="back_main")]
-    ])
-    
-    await callback.message.edit_text(
-      "📊 <b>Профиль</b>\n\n"
-      "❌ У вас нет активной подписки\n\n"
-      "Купите VPN для доступа:",
-      parse_mode="HTML",
-      reply_markup=keyboard
-    )
-  
-  await callback.answer()
+  """Профиль пользователя (в Mini App)"""
+  await callback.answer("Откройте приложение для просмотра профиля", show_alert=False)
+  await callback.message.delete()
 
 @dp.callback_query(F.data == "my_keys")
 async def my_keys(callback: types.CallbackQuery):
