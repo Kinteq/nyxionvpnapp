@@ -119,7 +119,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold gradient-text mb-2">
             Добро пожаловать в Nyxion VPN
           </h1>
-          <p className="text-textLight">
+          <p className="text-textLight dark:text-white">
             Ваш надежный спутник в мире интернета
           </p>
         </motion.div>
@@ -135,7 +135,7 @@ export default function Home() {
           className="card"
         >
           <h2 className="font-semibold mb-3">🎁 Промокод</h2>
-          <p className="text-textLight text-sm mb-3">Есть промокод? Активируйте его здесь:</p>
+          <p className="text-textLight dark:text-white text-sm mb-3">Есть промокод? Активируйте его здесь:</p>
           <div className="space-y-3">
             <input
               type="text"
@@ -183,25 +183,25 @@ export default function Home() {
           <div className="card text-center">
             <div className="text-3xl mb-2">⚡️</div>
             <h3 className="font-semibold mb-1">Высокая скорость</h3>
-            <p className="text-sm text-textLight">До 1 Гбит/с</p>
+            <p className="text-sm text-textLight dark:text-white">До 1 Гбит/с</p>
           </div>
           
           <div className="card text-center">
             <div className="text-3xl mb-2">🔒</div>
             <h3 className="font-semibold mb-1">Безопасность</h3>
-            <p className="text-sm text-textLight">Шифрование AES-256</p>
+            <p className="text-sm text-textLight dark:text-white">Шифрование AES-256</p>
           </div>
           
           <div className="card text-center">
             <div className="text-3xl mb-2">🌍</div>
             <h3 className="font-semibold mb-1">Без ограничений</h3>
-            <p className="text-sm text-textLight">Безлимитный трафик</p>
+            <p className="text-sm text-textLight dark:text-white">Безлимитный трафик</p>
           </div>
           
           <div className="card text-center">
             <div className="text-3xl mb-2">⏱</div>
             <h3 className="font-semibold mb-1">24/7 Доступ</h3>
-            <p className="text-sm text-textLight">Всегда на связи</p>
+            <p className="text-sm text-textLight dark:text-white">Всегда на связи</p>
           </div>
         </motion.div>
 
