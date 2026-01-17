@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -11,19 +10,6 @@ interface KeyData {
   expiryDate: string;
   daysLeft: number;
 }
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }
-};
 
 export default function KeysPage() {
   const [keys, setKeys] = useState<KeyData | null>(null);
@@ -67,29 +53,20 @@ export default function KeysPage() {
   };
 
   return (
-    <motion.main
-      className="min-h-screen pb-28 bg-background dark:bg-surfaceDark"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6">
-        <motion.h1 variants={itemVariants} className="text-2xl font-bold mb-4 gradient-text">
+        <h1 className="text-2xl font-bold mb-4 gradient-text">
           🔑 Мои ключи
-        </motion.h1>
+        </h1>
         
         {loading ? (
-          <motion.div variants={itemVariants} className="card text-center py-12">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-10 h-10 border-3 border-coral border-t-transparent rounded-full mx-auto mb-4"
-            />
+          <div className="card text-center py-12">
+            <div className="w-10 h-10 border-3 border-coral border-t-transparent rounded-full mx-auto mb-4 animate-spin" />
             <div className="text-gray-500">Загрузка...</div>
-          </motion.div>
+          </div>
         ) : keys ? (
           <div className="space-y-4">
-            <motion.div variants={itemVariants} className="card">
+            <div className="card">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
                 <h2 className="font-semibold">Активная подписка</h2>
@@ -107,56 +84,46 @@ export default function KeysPage() {
                 </p>
               </div>
               
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+              <button 
                 onClick={copyToClipboard}
-                className={`w-full py-3 text-sm font-semibold rounded-xl inline-flex items-center justify-center gap-2 transition-all ${
+                className={`w-full py-3 text-sm font-semibold rounded-xl inline-flex items-center justify-center gap-2 active:scale-[0.98] transition-transform ${
                   copied 
                     ? 'bg-green-500 text-white' 
                     : 'bg-gradient-to-r from-coral to-peach text-white shadow-lg shadow-coral/20'
                 }`}
               >
                 {copied ? '✓ Скопировано!' : '📋 Скопировать ключ'}
-              </motion.button>
-            </motion.div>
+              </button>
+            </div>
 
-            <motion.div variants={itemVariants} className="card">
+            <div className="card">
               <h2 className="font-semibold mb-3">📱 Как подключиться?</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                 Скопируйте ключ и добавьте его в приложение Hiddify
               </p>
               <Link href="/guide">
-                <motion.div 
-                  whileHover={{ scale: 1.02, x: 4 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-400"
-                >
+                <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-transform">
                   <div className="font-semibold">📘 Открыть инструкцию</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Пошаговое руководство</div>
-                </motion.div>
+                </div>
               </Link>
-            </motion.div>
+            </div>
           </div>
         ) : (
-          <motion.div variants={itemVariants} className="card text-center py-12">
+          <div className="card text-center py-12">
             <div className="text-5xl mb-4">🔒</div>
             <h2 className="font-semibold text-lg mb-2">Нет активной подписки</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Приобретите подписку, чтобы получить VPN ключ
             </p>
             <Link href="/buy">
-              <motion.button 
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-6 py-3 bg-gradient-to-r from-coral to-peach text-white font-semibold rounded-xl shadow-lg shadow-coral/20"
-              >
+              <button className="px-6 py-3 bg-gradient-to-r from-coral to-peach text-white font-semibold rounded-xl shadow-lg shadow-coral/20 active:scale-[0.97] transition-transform">
                 💎 Купить подписку
-              </motion.button>
+              </button>
             </Link>
-          </motion.div>
+          </div>
         )}
       </div>
-    </motion.main>
+    </main>
   );
 }

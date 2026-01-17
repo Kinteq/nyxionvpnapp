@@ -16,10 +16,7 @@ export function useThemeController() {
   const applyTheme = useCallback((mode: 'light' | 'dark') => {
     if (typeof document === 'undefined') return;
     
-    // Добавляем класс для плавного перехода
-    document.documentElement.classList.add('theme-transitioning');
-    
-    // Применяем тему
+    // Применяем тему мгновенно
     if (mode === 'dark') {
       document.documentElement.classList.add('dark');
       document.body.classList.add('dark');
@@ -27,11 +24,6 @@ export function useThemeController() {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
     }
-    
-    // Убираем класс перехода после анимации
-    setTimeout(() => {
-      document.documentElement.classList.remove('theme-transitioning');
-    }, 350);
   }, []);
 
   useEffect(() => {
