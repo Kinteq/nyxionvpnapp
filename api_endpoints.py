@@ -49,6 +49,55 @@ MAX_DEVICES_PER_USER = 3  # Максимум устройств на одног�
 
 # Промокоды из БД
 promo_codes = {}
+_promo_redeem_table_ready = False
+
+async def _ensure_promo_redeem_table():
+    global _promo_redeem_table_ready
+    if _promo_redeem_table_ready:
+        return
+    conn = await asyncpg.connect(DB_DSN)
+    try:
+        await conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS promo_redemptions (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                code VARCHAR(50) NOT NULL,
+                redeemed_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (code, user_id)
+            )
+            """
+        )
+        _promo_redeem_table_ready = True
+    finally:
+        await conn.close()
+
+async def has_user_redeemed_promo(user_id: int, code: str) -> bool:
+    await _ensure_promo_redeem_table()
+    conn = await asyncpg.connect(DB_DSN)
+    try:
+        row = await conn.fetchrow(
+            "SELECT 1 FROM promo_redemptions WHERE user_id=$1 AND code=$2",
+            user_id, code
+        )
+        return row is not None
+    finally:
+        await conn.close()
+
+async def mark_user_redeemed_promo(user_id: int, code: str):
+    await _ensure_promo_redeem_table()
+    conn = await asyncpg.connect(DB_DSN)
+    try:
+        await conn.execute(
+            """
+            INSERT INTO promo_redemptions(user_id, code)
+            VALUES($1, $2)
+            ON CONFLICT (code, user_id) DO NOTHING
+            """,
+            user_id, code
+        )
+    finally:
+        await conn.close()
 
 async def fetch_promo_from_db(code: str):
     conn = await asyncpg.connect(DB_DSN)
@@ -305,6 +354,13 @@ async def handle_activate_promo_api(req):
         if not promo or not promo.get("is_active"):
             return web.json_response({"success": False, "error": "Неверный промокод"}, status=404)
 
+        # Ограничение: один раз на пользователя для данного кода
+        if await has_user_redeemed_promo(int(user_id), promo_code):
+            return web.json_response({
+                "success": False,
+                "error": "Этот промокод уже был активирован вашим аккаунтом"
+            }, status=400)
+
         # Резервируем активацию (used +1 если есть лимит)
         reserved = await reserve_promo_in_db(promo_code)
         if not reserved:
@@ -361,6 +417,12 @@ async def handle_activate_promo_api(req):
             "promo_code": promo_code,
             "blitz_username": blitz_username
         }
+
+        # Фиксируем факт активации промокода для пользователя (одноразовость)
+        try:
+            await mark_user_redeemed_promo(int(user_id), promo_code)
+        except Exception as e:
+            logger.warning(f"Failed to record promo redemption for user {user_id}, code {promo_code}: {e}")
         
         logger.info(f"Promo code {promo_code} activated for user {user_id}")
         

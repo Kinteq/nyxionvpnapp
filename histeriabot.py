@@ -217,7 +217,13 @@ class BlitzAPI:
         ) as resp:
             if resp.status in [200, 201]:
                 logger.info(f"✅ User created: {username}")
-                return await resp.json()
+                created = await resp.json()
+                # Попытка применить лимит IP (если поддерживается)
+                try:
+                    await self.set_inactive_ip_limit(username, limit=3, enabled=True)
+                except Exception as e:
+                    logger.warning(f"IP limit not applied for {username}: {e}")
+                return created
             elif resp.status == 409:
                 # Пользователь уже существует
                 logger.info(f"User {username} already exists")
@@ -382,6 +388,23 @@ class BlitzAPI:
                     
         except Exception as e:
             logger.error(f"Exception in extend_user for {username}: {e}")
+            return False
+
+  async def set_inactive_ip_limit(self, username: str, limit: int = 3, enabled: bool = True) -> bool:
+    """Включить/настроить лимит IP для пользователя (бэкенд-ограничение на одновременные IP)."""
+    async with aiohttp.ClientSession() as session:
+        payload = {"limit": int(limit), "enabled": bool(enabled)}
+        async with session.patch(
+            f"{self.base_url}/api/v1/users/{username}/inactivelimit",
+            headers=self.headers,
+            json=payload,
+            ssl=False
+        ) as resp:
+            if resp.status in [200, 204]:
+                logger.info(f"✅ Set inactive IP limit for {username}: {payload}")
+                return True
+            txt = await resp.text()
+            logger.warning(f"⚠️ Failed to set IP limit for {username}: {resp.status} {txt}")
             return False
 
 
