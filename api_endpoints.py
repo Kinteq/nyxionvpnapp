@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 active_subscriptions = {}
 crypto_pay_api_token = os.getenv("CRYPTO_PAY_TOKEN", "513647:AAv2qN58YYe5pKqg2LFYFCE2sS6JKp6DcQT")
 
-DB_DSN = os.getenv("DATABASE_URL", "postgresql://nyxion_vpn@localhost/nyxion_vpn")
+DB_DSN = os.getenv("DATABASE_URL", "postgresql://nyxion_vpn:nyxion_vpn_pass@localhost/nyxion_vpn")
 
 # Загружаем pending_invoices из файла при старте
 pending_invoices = {}
@@ -190,7 +190,22 @@ async def handle_subscription_api(req):
         device_id = req.rel_url.query.get("deviceId", "unknown")
         ip_address = req.headers.get("X-Forwarded-For", req.remote) or "unknown"
         
-        sub = active_subscriptions.get(uid)
+        # Читаем подписку из БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            sub = await conn.fetchrow(
+                """
+                SELECT user_id, vpn_username, vpn_uri, expiry_date, traffic_gb, is_active
+                FROM subscriptions
+                WHERE user_id = $1
+                ORDER BY expiry_date DESC
+                LIMIT 1
+                """,
+                uid
+            )
+        finally:
+            await conn.close()
+        
         if not sub: 
             return web.json_response({"isActive": False})
         
@@ -203,16 +218,15 @@ async def handle_subscription_api(req):
                 "deviceLimitReached": True
             })
         
-        # Получаем свежие данные из Blitz Panel если есть username
-        blitz_username = sub.get("blitz_username")
+        # Получаем свежие данные из Blitz Panel
+        blitz_username = sub.get("vpn_username")
         blitz_data = None
         if blitz_username:
             blitz_data = await fetch_user_from_blitz(blitz_username)
         
-        # Если удалось получить из Blitz, используем свежие данные; иначе из памяти
+        # Если удалось получить из Blitz, используем свежие данные; иначе из БД
         if blitz_data:
             exp_days = blitz_data.get("expiration_days", 0)
-            # Вычисляем дату истечения на основе дней
             created_at = blitz_data.get("created_at")
             if isinstance(created_at, str):
                 try:
@@ -224,14 +238,15 @@ async def handle_subscription_api(req):
             exp = created_dt + timedelta(days=exp_days)
             vpn_uri = blitz_data.get("uri") or sub.get("vpn_uri", "")
         else:
-            # Используем данные из памяти
+            # Используем данные из БД
             exp = sub.get("expiry_date")
-            if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
-            if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+            if isinstance(exp, str): 
+                exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+            if exp.tzinfo is None: 
+                exp = exp.replace(tzinfo=timezone.utc)
             vpn_uri = sub.get("vpn_uri", "")
         
         is_act = (exp - datetime.now(timezone.utc)).total_seconds() > 0
-        
         devices_count = len(user_devices.get(uid, []))
         
         return web.json_response({
@@ -250,16 +265,33 @@ async def handle_subscription_api(req):
 async def handle_user_api(req):
     try:
         uid = int(req.rel_url.query.get("userId", 0))
-        sub = active_subscriptions.get(uid)
-        if not sub: return web.json_response({"id": uid, "hasSubscription": False})
         
-        # Получаем свежие данные из Blitz Panel если есть username
-        blitz_username = sub.get("blitz_username")
+        # Читаем подписку из БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            sub = await conn.fetchrow(
+                """
+                SELECT user_id, vpn_username, vpn_uri, expiry_date, traffic_gb, is_active
+                FROM subscriptions
+                WHERE user_id = $1
+                ORDER BY expiry_date DESC
+                LIMIT 1
+                """,
+                uid
+            )
+        finally:
+            await conn.close()
+        
+        if not sub: 
+            return web.json_response({"id": uid, "hasSubscription": False})
+        
+        # Получаем свежие данные из Blitz Panel
+        blitz_username = sub.get("vpn_username")
         blitz_data = None
         if blitz_username:
             blitz_data = await fetch_user_from_blitz(blitz_username)
         
-        # Если удалось получить из Blitz, используем свежие данные; иначе из памяти
+        # Если удалось получить из Blitz, используем свежие данные; иначе из БД
         if blitz_data:
             exp_days = blitz_data.get("expiration_days", 0)
             created_at = blitz_data.get("created_at")
@@ -273,8 +305,10 @@ async def handle_user_api(req):
             exp = created_dt + timedelta(days=exp_days)
         else:
             exp = sub.get("expiry_date")
-            if isinstance(exp, str): exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
-            if exp.tzinfo is None: exp = exp.replace(tzinfo=timezone.utc)
+            if isinstance(exp, str): 
+                exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+            if exp.tzinfo is None: 
+                exp = exp.replace(tzinfo=timezone.utc)
         
         is_act = (exp - datetime.now(timezone.utc)).total_seconds() > 0
         return web.json_response({
@@ -292,12 +326,28 @@ async def handle_keys_api(req):
     """Получить VPN ключи пользователя"""
     try:
         uid = int(req.rel_url.query.get("userId", 0))
-        sub = active_subscriptions.get(uid)
+        
+        # Читаем подписку из БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            sub = await conn.fetchrow(
+                """
+                SELECT user_id, vpn_username, vpn_uri, expiry_date, is_active
+                FROM subscriptions
+                WHERE user_id = $1
+                ORDER BY expiry_date DESC
+                LIMIT 1
+                """,
+                uid
+            )
+        finally:
+            await conn.close()
+        
         if not sub or not sub.get("vpn_uri"):
             return web.json_response({"keys": []})
         
-        # Получаем свежие данные из Blitz Panel если есть username
-        blitz_username = sub.get("blitz_username")
+        # Получаем свежие данные из Blitz Panel
+        blitz_username = sub.get("vpn_username")
         blitz_data = None
         vpn_uri = sub.get("vpn_uri", "")
         
@@ -346,12 +396,28 @@ async def handle_subscription_text_api(req):
     """Возвращает подписку в текстовом виде (NormalSub-подобный формат: по одному URI на строку)."""
     try:
         uid = int(req.rel_url.query.get("userId", 0))
-        sub = active_subscriptions.get(uid)
+        
+        # Читаем подписку из БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            sub = await conn.fetchrow(
+                """
+                SELECT user_id, vpn_username, vpn_uri
+                FROM subscriptions
+                WHERE user_id = $1
+                ORDER BY expiry_date DESC
+                LIMIT 1
+                """,
+                uid
+            )
+        finally:
+            await conn.close()
+        
         if not sub or not sub.get("vpn_uri"):
             return web.Response(text="", content_type="text/plain; charset=utf-8")
         
-        # Получаем свежие данные из Blitz Panel если есть username
-        blitz_username = sub.get("blitz_username")
+        # Получаем свежие данные из Blitz Panel
+        blitz_username = sub.get("vpn_username")
         vpn_uri = sub.get("vpn_uri", "")
         
         if blitz_username:
@@ -499,14 +565,27 @@ async def handle_activate_promo_api(req):
         vpn_uri = None
         blitz_username = None
         
-        # Проверяем есть ли уже активная подписка
-        if user_id in active_subscriptions:
-            existing_sub = active_subscriptions[user_id]
+        # Проверяем есть ли уже активная подписка в БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            existing_sub = await conn.fetchrow(
+                "SELECT user_id, vpn_username, vpn_uri, expiry_date FROM subscriptions WHERE user_id = $1",
+                user_id
+            )
+        finally:
+            await conn.close()
+        
+        if existing_sub:
             # Продлеваем существующую подписку (добавляем дни к текущему сроку)
-            current_expiry = datetime.fromisoformat(existing_sub["expiry_date"])
+            current_expiry = existing_sub["expiry_date"]
+            if isinstance(current_expiry, str):
+                current_expiry = datetime.fromisoformat(current_expiry)
+            if current_expiry.tzinfo is None:
+                current_expiry = current_expiry.replace(tzinfo=timezone.utc)
+            
             expiry_date = current_expiry + timedelta(days=reserved["days"])
             vpn_uri = existing_sub["vpn_uri"]
-            blitz_username = existing_sub.get("blitz_username")
+            blitz_username = existing_sub.get("vpn_username")
             
             # Продлеваем в Blitz (сохраняет существующий ключ и URI)
             if blitz_username:
@@ -527,7 +606,7 @@ async def handle_activate_promo_api(req):
             # Создаём пользователя в Blitz (получаем реальный username)
             try:
                 blitz_result = await blitz_api.create_user(
-                    username=f"user_{user_id}",
+                    username=f"vpn_{user_id}",
                     traffic_gb=reserved["traffic_gb"],
                     expiry_days=reserved["days"]
                 )
@@ -537,13 +616,23 @@ async def handle_activate_promo_api(req):
             except Exception as e:
                 logger.warning(f"Could not create Blitz user: {e}")
         
-        active_subscriptions[user_id] = {
-            "expiry_date": expiry_date.isoformat(),
-            "vpn_uri": vpn_uri,
-            "traffic_gb": reserved["traffic_gb"],
-            "promo_code": promo_code,
-            "blitz_username": blitz_username
-        }
+        # Сохраняем в БД
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            await conn.execute("""
+                INSERT INTO subscriptions (user_id, vpn_username, vpn_uri, expiry_date, traffic_gb, promo_code, is_active, created_at, updated_at, server_id)
+                VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW(), 1)
+                ON CONFLICT (user_id) 
+                DO UPDATE SET 
+                    vpn_uri = $3,
+                    expiry_date = $4,
+                    traffic_gb = $5,
+                    promo_code = COALESCE(subscriptions.promo_code, $6),
+                    is_active = true,
+                    updated_at = NOW()
+            """, user_id, blitz_username, vpn_uri, expiry_date, reserved["traffic_gb"], promo_code)
+        finally:
+            await conn.close()
 
         # Фиксируем факт активации промокода для пользователя (одноразовость)
         try:
@@ -559,7 +648,7 @@ async def handle_activate_promo_api(req):
             "subscription": {
                 "daysLeft": reserved["days"],
                 "trafficGb": reserved["traffic_gb"],
-                "vpnUri": active_subscriptions[user_id]["vpn_uri"]
+                "vpnUri": vpn_uri
             }
         })
         
@@ -570,193 +659,114 @@ async def handle_activate_promo_api(req):
         return web.json_response({"success": False, "error": str(e)}, status=500)
 
 async def handle_cryptobot_webhook(req):
-    """Обработка webhook от CryptoBot после оплаты"""
+    """Обработка webhook от CryptoBot после оплаты (продлеваем без смены URI)"""
     try:
         data = await req.json()
         logger.info(f"📩 CryptoBot webhook received: {data}")
-        
-        # CryptoBot webhook format: 
-        # {
-        #   "update_id": 12345,
-        #   "update_type": "invoice_paid",
-        #   "request_date": "2024-01-01T12:00:00Z",
-        #   "payload": {
-        #     "invoice_id": "42216129",
-        #     "status": "paid",
-        #     "asset": "USDT",
-        #     "amount": "0.5",
-        #     ...
-        #   }
-        # }
-        
+
         update_type = data.get("update_type")
         if update_type != "invoice_paid":
             logger.info(f"Ignoring webhook type: {update_type}")
             return web.Response(text="OK")
-        
+
         payload = data.get("payload", {})
         invoice_id = str(payload.get("invoice_id"))
         status = payload.get("status")
-        
         if status != "paid":
             logger.info(f"Invoice {invoice_id} status is {status}, skipping")
             return web.Response(text="OK")
-        
-        # Находим данные о платеже
+
         invoice_data = pending_invoices.get(invoice_id)
         if not invoice_data:
             logger.warning(f"⚠️ Invoice {invoice_id} not found in pending_invoices")
             return web.Response(text="OK")
-        
-        user_id = invoice_data.get("user_id")
-        asset = invoice_data.get("asset", "USDT")
-        amount = invoice_data.get("amount", 0)
-        
-        logger.info(f"💰 Processing payment for user {user_id}: {amount} {asset}")
-        
-        username = f"vpn_{user_id}"
-        
-        # Проверяем существует ли пользователь в Blitz Panel
-        user_exists = False
-        current_expiry_days = 0
-        
-        async with ClientSession() as session:
+
+        user_id = int(invoice_data.get("user_id"))
+        logger.info(f"💰 Processing payment for user {user_id}")
+
+        # Текущая подписка из БД (если есть)
+        current_sub = None
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            current_sub = await conn.fetchrow(
+                """
+                SELECT user_id, vpn_username, vpn_uri, expiry_date
+                FROM subscriptions
+                WHERE user_id = $1
+                ORDER BY expiry_date DESC
+                LIMIT 1
+                """,
+                user_id
+            )
+        finally:
+            await conn.close()
+
+        blitz_username = (current_sub.get("vpn_username") if current_sub else None) or f"vpn_{user_id}"
+        existing_vpn_uri = current_sub.get("vpn_uri") if current_sub else None
+
+        # Продление в Blitz без смены URI
+        extended = False
+        try:
+            if blitz_api:
+                extended = await blitz_api.extend_user(blitz_username, VPN_DAYS)
+            else:
+                logger.warning("blitz_api is not initialized; skipping Blitz extension")
+        except Exception as e:
+            logger.warning(f"Could not extend Blitz user {blitz_username}: {e}")
+
+        # Если не удалось продлить через Blitz, не меняем локально URI; продолжаем апдейт БД
+
+        # Новая дата окончания: от текущей expiry или от сейчас, что больше, + VPN_DAYS
+        base_dt = datetime.now(timezone.utc)
+        if current_sub and current_sub.get("expiry_date"):
+            exp = current_sub.get("expiry_date")
+            if isinstance(exp, str):
+                try:
+                    exp = datetime.fromisoformat(exp.replace("Z", "+00:00"))
+                except:
+                    exp = base_dt
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > base_dt:
+                base_dt = exp
+        new_expiry = base_dt + timedelta(days=VPN_DAYS)
+
+        # Если URI отсутствует (новый пользователь), пробуем создать пользователя и получить URI
+        new_vpn_uri = existing_vpn_uri
+        if not existing_vpn_uri:
             try:
-                # Проверяем существующего пользователя
-                headers = {"Authorization": BLITZ_API_TOKEN}
-                async with session.get(f"{BLITZ_PANEL_URL}/api/v1/users/{username}", headers=headers) as resp:
-                    if resp.status == 200:
-                        user_data = await resp.json()
-                        user_exists = True
-                        current_expiry_days = user_data.get('expiration_days', 0)
-                        logger.info(f"📊 User {username} exists with {current_expiry_days} days")
+                if blitz_api:
+                    created = await blitz_api.create_user(blitz_username, traffic_gb=0, expiry_days=VPN_DAYS)
+                    # Попробуем получить URI
+                    new_vpn_uri = created.get("uri") or new_vpn_uri or ""
             except Exception as e:
-                logger.warning(f"⚠️ Error checking user: {e}")
-        
-        # Генерируем новый пароль
-        import secrets
-        import string
-        alphabet = string.ascii_letters + string.digits + '_-'
-        password = ''.join(secrets.choice(alphabet) for _ in range(32))
-        
-        # Расчет новой даты окончания подписки
-        if user_exists:
-            # При продлении добавляем +30 дней к текущему сроку
-            new_expiry_days = current_expiry_days + VPN_DAYS
-            logger.info(f"🔄 Extending subscription: {current_expiry_days} + {VPN_DAYS} = {new_expiry_days} days")
-        else:
-            # Новый пользователь
-            new_expiry_days = VPN_DAYS
-            logger.info(f"🆕 New user: {new_expiry_days} days")
-        
-        # Создаем или обновляем пользователя через Blitz Panel API
-        vpn_uri = ""
-        async with ClientSession() as session:
-            try:
-                if user_exists:
-                    # Обновляем существующего пользователя (новый пароль + продление)
-                    update_data = {
-                        "new_password": password,
-                        "new_expiration_days": new_expiry_days,
-                        "new_traffic_limit": 0,
-                        "blocked": False,
-                        "unlimited_ip": False,
-                        "renew_password": False,
-                        "renew_creation_date": False
-                    }
-                    
-                    headers = {"Authorization": BLITZ_API_TOKEN}
-                    async with session.patch(
-                        f"{BLITZ_PANEL_URL}/api/v1/users/{username}",
-                        json=update_data,
-                        headers=headers
-                    ) as resp:
-                        if resp.status == 200:
-                            vpn_uri = (
-                                f"hysteria2://{username}:{password}@{HYSTERIA_SERVER}:{HYSTERIA_PORT}/"
-                                f"?sni={HYSTERIA_SNI}&insecure=1#Nyxion%20VPN"
-                            )
-                            logger.info(f"✅ Updated user {username} via Blitz API")
-                        else:
-                            error_text = await resp.text()
-                            logger.error(f"❌ Failed to update user {username}: {resp.status} - {error_text}")
-                            vpn_uri = "Error creating VPN key"
-                else:
-                    # Создаем нового пользователя
-                    create_data = {
-                        "username": username,
-                        "password": password,
-                        "traffic_limit": 0,
-                        "expiration_days": new_expiry_days,
-                        "unlimited": True,
-                        "blocked": False,
-                        "note": None
-                    }
-                    
-                    headers = {"Authorization": BLITZ_API_TOKEN}
-                    async with session.post(
-                        f"{BLITZ_PANEL_URL}/api/v1/users/",
-                        json=create_data,
-                        headers=headers
-                    ) as resp:
-                        if resp.status in [200, 201]:
-                            vpn_uri = (
-                                f"hysteria2://{username}:{password}@{HYSTERIA_SERVER}:{HYSTERIA_PORT}/"
-                                f"?sni={HYSTERIA_SNI}&insecure=1#Nyxion%20VPN"
-                            )
-                            logger.info(f"✅ Created user {username} via Blitz API")
-                        else:
-                            error_text = await resp.text()
-                            logger.error(f"❌ Failed to create user {username}: {resp.status} - {error_text}")
-                            vpn_uri = "Error creating VPN key"
-            except Exception as e:
-                logger.error(f"💥 Exception working with Blitz API: {e}")
-                import traceback
-                logger.error(traceback.format_exc())
-                vpn_uri = "Error creating VPN key"
-        
-        # Сохраняем подписку
-        if vpn_uri and vpn_uri != "Error creating VPN key":
-            # Рассчитываем дату окончания
-            from datetime import datetime, timedelta, timezone
-            creation_date = datetime.now(timezone.utc)
-            expiry_date = creation_date + timedelta(days=new_expiry_days)
-            
-            active_subscriptions[user_id] = {
-                "username": username,
-                "password": password,
-                "expiry_date": expiry_date.isoformat(),
-                "traffic_gb": 0,  # Безлимит
-                "vpn_uri": vpn_uri,
-                "created_at": creation_date.isoformat(),
-                "blitz_username": username
-            }
-            
-            logger.info(f"✅ Subscription {'extended' if user_exists else 'created'} for user {user_id} until {expiry_date}")
-        else:
-            logger.error(f"❌ Failed to create VPN key for user {user_id}")
-        
-        # Удаляем из pending
+                logger.warning(f"Could not create Blitz user {blitz_username}: {e}")
+
+        # Сохраняем в БД, не меняя URI, если он уже был
+        conn = await asyncpg.connect(DB_DSN)
+        try:
+            await conn.execute(
+                """
+                INSERT INTO subscriptions (user_id, vpn_username, vpn_uri, expiry_date, traffic_gb, is_active, created_at, updated_at, server_id)
+                VALUES ($1, $2, $3, $4, 0, true, NOW(), NOW(), 1)
+                ON CONFLICT (user_id)
+                DO UPDATE SET
+                    vpn_uri = COALESCE(subscriptions.vpn_uri, EXCLUDED.vpn_uri),
+                    expiry_date = EXCLUDED.expiry_date,
+                    is_active = true,
+                    updated_at = NOW()
+                """,
+                user_id, blitz_username, new_vpn_uri or existing_vpn_uri or "", new_expiry
+            )
+        finally:
+            await conn.close()
+
+        # Очистка pending и ответ
         del pending_invoices[invoice_id]
         save_pending_invoices()
-        
-        # Сохраняем подписки в subscriptions.json
-        try:
-            with open('subscriptions.json', 'w') as f:
-                # Сериализуем даты в ISO формат
-                subs_to_save = {}
-                for uid, sub in active_subscriptions.items():
-                    sub_copy = sub.copy()
-                    if isinstance(sub_copy.get('expiry_date'), datetime):
-                        sub_copy['expiry_date'] = sub_copy['expiry_date'].isoformat()
-                    subs_to_save[uid] = sub_copy
-                json.dump(subs_to_save, f, indent=2)
-                logger.info("💾 Subscriptions saved")
-        except Exception as e:
-            logger.error(f"Error saving subscriptions: {e}")
-        
+        logger.info(f"✅ Payment processed for user {user_id}; new expiry: {new_expiry}")
         return web.Response(text="OK")
-        
+
     except Exception as e:
         logger.error(f"❌ Webhook error: {e}", exc_info=True)
         return web.Response(text="ERROR", status=500)
