@@ -153,19 +153,6 @@ export default function BuyPage() {
         <motion.div className="card mb-6" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, delay: 0.1 }}>
           <h3 className="text-xl font-bold mb-4">Способ оплаты</h3>
           <div className="space-y-3">
-            <button onClick={() => setSelectedMethod('cryptobot')}
-              className={`w-full p-4 rounded-xl border-2 transition-all ${
-                selectedMethod === 'cryptobot' ? 'border-coral bg-coral/10 shadow-lg shadow-coral/30' : 'border-borderLight dark:border-borderDark hover:border-coral'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="text-left">
-                  <div className="font-bold text-lg">💎 CryptoBot</div>
-                  <div className="text-sm text-textLight dark:text-white">Криптовалюта (USDT, TON, BTC)</div>
-                </div>
-                {selectedMethod === 'cryptobot' && <span className="text-accent text-2xl">✓</span>}
-              </div>
-            </button>
             <button onClick={() => setSelectedMethod('yukassa')}
               className={`w-full p-4 rounded-xl border-2 transition-all opacity-60 ${
                 selectedMethod === 'yukassa' ? 'border-coral bg-coral/10 shadow-lg shadow-coral/30' : 'border-borderLight dark:border-borderDark hover:border-coral'
@@ -177,6 +164,19 @@ export default function BuyPage() {
                   <div className="text-sm text-textLight dark:text-white">Банковские карты (скоро)</div>
                 </div>
                 {selectedMethod === 'yukassa' && <span className="text-accent text-2xl">✓</span>}
+              </div>
+            </button>
+            <button onClick={() => setSelectedMethod('cryptobot')}
+              className={`w-full p-4 rounded-xl border-2 transition-all ${
+                selectedMethod === 'cryptobot' ? 'border-coral bg-coral/10 shadow-lg shadow-coral/30' : 'border-borderLight dark:border-borderDark hover:border-coral'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <div className="font-bold text-lg">💎 CryptoBot</div>
+                  <div className="text-sm text-textLight dark:text-white">Криптовалюта (USDT, TON, BTC)</div>
+                </div>
+                {selectedMethod === 'cryptobot' && <span className="text-accent text-2xl">✓</span>}
               </div>
             </button>
           </div>
