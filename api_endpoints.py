@@ -238,6 +238,19 @@ async def handle_keys_api(req):
         logger.error(f"Keys API error: {e}")
         return web.json_response({"error": str(e)}, status=500)
 
+async def handle_subscription_text_api(req):
+    """Возвращает подписку в текстовом виде (NormalSub-подобный формат: по одному URI на строку)."""
+    try:
+        uid = int(req.rel_url.query.get("userId", 0))
+        sub = active_subscriptions.get(uid)
+        if not sub or not sub.get("vpn_uri"):
+            return web.Response(text="", content_type="text/plain; charset=utf-8")
+        content = sub.get("vpn_uri", "").strip() + "\n"
+        return web.Response(text=content, content_type="text/plain; charset=utf-8")
+    except Exception as e:
+        logger.error(f"Subscription text API error: {e}")
+        return web.Response(text="", content_type="text/plain; charset=utf-8")
+
 async def handle_create_invoice_api(req):
     """Создать счёт на оплату"""
     try:
@@ -638,6 +651,7 @@ def setup_api_routes(app):
     app.router.add_get("/api/subscription", handle_subscription_api)
     app.router.add_get("/api/user", handle_user_api)
     app.router.add_get("/api/keys", handle_keys_api)
+    app.router.add_get("/api/sub.txt", handle_subscription_text_api)
     app.router.add_post("/api/create-invoice", handle_create_invoice_api)
     app.router.add_post("/api/activate-promo", handle_activate_promo_api)
     app.router.add_post("/api/cryptobot-webhook", handle_cryptobot_webhook)  # Webhook от CryptoBot
