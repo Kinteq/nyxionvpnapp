@@ -69,7 +69,7 @@ export default function BuyPage() {
 
   return (
     <motion.main
-      className="min-h-screen bg-[#f8f9fb] dark:bg-surfaceDark text-textDark dark:text-blueGray-100 transition-colors"
+      className="min-h-screen bg-[#f8f9fb] dark:bg-surfaceDark text-textDark dark:text-white transition-colors"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
@@ -86,7 +86,7 @@ export default function BuyPage() {
         >
           <h2 className="text-2xl font-bold mb-2">VPN на 30 дней</h2>
           <p className="text-5xl font-bold gradient-text mb-4">150₽</p>
-          <ul className="space-y-3 text-textDark dark:text-blueGray-200 mb-4">
+          <ul className="space-y-3 text-textDark dark:text-blueGray-100 mb-4">
             <li className="text-lg">✅ Безлимитный трафик</li>
             <li className="text-lg">✅ Высокая скорость до 1 Гбит/с</li>
             <li className="text-lg">✅ Без логов</li>

@@ -73,8 +73,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <motion.main
-      className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark transition-colors"
+      <motion.main
+        className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark text-textDark dark:text-white transition-colors"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
@@ -133,32 +133,32 @@ export default function ProfilePage() {
               {loadingDevices ? (
                 <div className="text-center py-4 text-textLight dark:text-blueGray-200">Загрузка...</div>
               ) : devices.length > 0 ? (
-                <div className="space-y-2">
-                  {devices.map((device, idx) => (
-                    <div key={idx} className="p-3 bg-gray-800/30 rounded-lg border border-gray-700">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex-1">
-                          <p className="text-xs text-textLight dark:text-blueGray-200 break-all">{device.device_id}</p>
-                          <p className="text-xs text-gray-500 dark:text-blueGray-300 mt-1">IP: {device.ip}</p>
-                          <p className="text-xs text-gray-500 dark:text-blueGray-300">
-                            Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
-                          </p>
+                  <div className="space-y-2">
+                    {devices.map((device, idx) => (
+                      <div key={idx} className="p-3 bg-blueGray-900 border border-borderDark rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <p className="text-xs text-blueGray-100 break-all">{device.device_id}</p>
+                            <p className="text-xs text-blueGray-300 mt-1">IP: {device.ip}</p>
+                            <p className="text-xs text-blueGray-300">
+                              Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleRemoveDevice(device.device_id)}
+                            className="ml-2 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs rounded transition-colors"
+                          >
+                            ✕
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleRemoveDevice(device.device_id)}
-                          className="ml-2 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs rounded transition-colors"
-                        >
-                          ✕
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 ) : (
                   <p className="text-textLight dark:text-blueGray-200 text-sm text-center py-4">
-                  Нет подключенных устройств
-                </p>
-              )}
+                    Нет подключенных устройств
+                  </p>
+                )}
             </motion.div>
 
             <motion.div
