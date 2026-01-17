@@ -86,7 +86,7 @@ export default function BuyPage() {
         >
           <h2 className="text-2xl font-bold mb-2">VPN на 30 дней</h2>
           <p className="text-5xl font-bold gradient-text mb-4">150₽</p>
-          <ul className="space-y-3 text-textDark dark:text-blueGray-100 mb-4">
+          <ul className="space-y-3 text-textDark dark:text-white mb-4">
             <li className="text-lg">✅ Безлимитный трафик</li>
             <li className="text-lg">✅ Высокая скорость до 1 Гбит/с</li>
             <li className="text-lg">✅ Без логов</li>
@@ -114,7 +114,7 @@ export default function BuyPage() {
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <div className="font-bold text-lg">💎 CryptoBot</div>
-                  <div className="text-sm text-textLight dark:text-blueGray-200">Криптовалюта (USDT, TON, BTC)</div>
+                  <div className="text-sm text-textLight dark:text-white">Криптовалюта (USDT, TON, BTC)</div>
                 </div>
                 {selectedMethod === 'cryptobot' && <span className="text-accent text-2xl">✓</span>}
               </div>
@@ -131,7 +131,7 @@ export default function BuyPage() {
               <div className="flex items-center justify-between">
                 <div className="text-left">
                   <div className="font-bold text-lg">💳 ЮКасса</div>
-                  <div className="text-sm text-textLight dark:text-blueGray-200">Банковские карты (скоро)</div>
+                  <div className="text-sm text-textLight dark:text-white">Банковские карты (скоро)</div>
                 </div>
                 {selectedMethod === 'yukassa' && <span className="text-accent text-2xl">✓</span>}
               </div>
@@ -156,7 +156,7 @@ export default function BuyPage() {
                   className={`p-4 rounded-xl border-2 transition-all font-bold text-lg ${
                     selectedAsset === asset
                       ? 'border-coral bg-gradient-to-br from-coral to-peach text-white shadow-lg shadow-coral/40'
-                      : 'border-borderLight dark:border-borderDark hover:border-coral text-textDark dark:text-blueGray-100'
+                      : 'border-borderLight dark:border-borderDark hover:border-coral text-textDark dark:text-white'
                   }`}
                 >
                   {asset}

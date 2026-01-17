@@ -65,7 +65,7 @@ export default function KeysPage() {
             transition={{ duration: 0.22 }}
           >
             <h2 className="font-semibold mb-3">✅ Активная подписка</h2>
-            <p className="text-sm text-textLight dark:text-blueGray-200 mb-3">
+            <p className="text-sm text-textLight dark:text-white mb-3">
               Истекает: {keys.expiryDate} ({keys.daysLeft} дней)
             </p>
             <div className="bg-gray-100 dark:bg-blueGray-900 rounded-lg p-3 mb-4 border border-borderLight dark:border-borderDark">
@@ -91,7 +91,7 @@ export default function KeysPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <p className="text-textLight dark:text-blueGray-200 mb-4">У вас нет активной подписки</p>
+            <p className="text-textLight dark:text-white mb-4">У вас нет активной подписки</p>
             <a
               href="/buy"
               className="inline-block px-6 py-2 bg-coral hover:bg-peach text-white rounded-lg font-semibold transition-colors"
