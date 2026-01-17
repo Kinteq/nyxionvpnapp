@@ -215,7 +215,7 @@ export default function Home() {
           >
             <h2 className="text-2xl font-bold mb-2">Начните прямо сейчас!</h2>
             <p className="mb-4 opacity-90">30 дней безлимитного VPN всего за 150₽</p>
-            <button className="btn-secondary w-full">
+            <motion.button whileTap={{ scale: 0.95 }} className="btn-secondary w-full">
               💎 Купить VPN
             </motion.button>
           </motion.div>
