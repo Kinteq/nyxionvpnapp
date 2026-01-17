@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -16,6 +17,9 @@ const config: Config = {
         background: "#F8F9FA",
         textDark: "#2C3E50",
         textLight: "#6C757D",
+        surfaceDark: "#0b1220",
+        cardDark: "#111827",
+        borderDark: "#1f2937",
       },
       backgroundImage: {
         'nyxion-gradient': 'linear-gradient(135deg, #FF9A8B 0%, #FFC3A0 50%, #7F9FB5 100%)',
