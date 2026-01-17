@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useThemeContext } from './ThemeProvider';
 
@@ -20,7 +20,6 @@ export default function Header({ user }: HeaderProps) {
   const { theme, resolvedTheme, setTheme } = useThemeContext();
   const [internalUser, setInternalUser] = useState<TgUser | null>(user ?? null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -57,8 +56,8 @@ export default function Header({ user }: HeaderProps) {
     
     setTimeout(() => {
       setTheme(next);
-      setTimeout(() => setIsTransitioning(false), 500);
-    }, 150);
+      setTimeout(() => setIsTransitioning(false), 600);
+    }, 100);
   };
 
   const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '☀️' : '🌙';
@@ -75,27 +74,27 @@ export default function Header({ user }: HeaderProps) {
       <AnimatePresence>
         {isTransitioning && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.3 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 pointer-events-none"
+            initial={{ opacity: 0, scale: 1.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed inset-0 z-[9999] pointer-events-none"
             style={{
-              background: resolvedTheme === 'dark' 
-                ? 'radial-gradient(circle at 90% 10%, rgba(248,249,250,0.5) 0%, transparent 50%)'
-                : 'radial-gradient(circle at 90% 10%, rgba(11,18,32,0.5) 0%, transparent 50%)'
+              background: resolvedTheme === 'light' 
+                ? 'radial-gradient(circle at 85% 8%, rgba(11,18,32,0.4) 0%, transparent 60%)'
+                : 'radial-gradient(circle at 85% 8%, rgba(255,255,255,0.3) 0%, transparent 60%)'
             }}
           />
         )}
       </AnimatePresence>
 
-      <header className="bg-nyxion-gradient dark:bg-gradient-to-br dark:from-blueGray-800 dark:to-blueGray-900 px-4 py-4 text-white shadow-md transition-all duration-500">
-        <div className="flex items-center justify-between">
+      <header className="bg-nyxion-gradient px-4 py-4 text-white shadow-lg sticky top-0 z-50">
+        <div className="flex items-center justify-between max-w-3xl mx-auto">
           <div className="flex items-center gap-3">
             <motion.div 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="w-12 h-12 rounded-full bg-white/25 border border-white/40 overflow-hidden flex items-center justify-center text-lg shadow-inner"
+              className="w-12 h-12 rounded-full bg-white/25 border border-white/40 overflow-hidden flex items-center justify-center text-lg shadow-inner backdrop-blur-sm"
             >
               {avatar.type === 'image' ? (
                 <img src={avatar.value} alt={displayName} className="w-full h-full object-cover" />
@@ -110,11 +109,10 @@ export default function Header({ user }: HeaderProps) {
           </div>
 
           <motion.button
-            ref={buttonRef}
             onClick={cycleTheme}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.92 }}
-            className="theme-toggle relative"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
           >
             <AnimatePresence mode="wait">
               <motion.span
@@ -128,13 +126,13 @@ export default function Header({ user }: HeaderProps) {
                   stiffness: 300,
                   damping: 20
                 }}
-                className="theme-toggle-icon inline-block"
+                className="text-xl inline-block"
               >
                 {themeIcon}
               </motion.span>
             </AnimatePresence>
             <motion.span 
-              className="text-sm font-medium ml-1"
+              className="text-sm font-medium"
               layout
             >
               {theme === 'system' ? 'Авто' : theme === 'light' ? 'День' : 'Ночь'}

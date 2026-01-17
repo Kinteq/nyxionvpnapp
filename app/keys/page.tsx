@@ -1,9 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 interface KeyData {
   vpnUri: string;
@@ -11,16 +12,29 @@ interface KeyData {
   daysLeft: number;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }
+};
+
 export default function KeysPage() {
   const [keys, setKeys] = useState<KeyData | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const loadKeys = async () => {
-      const w: any = typeof window !== "undefined" ? (window as any) : undefined;
-      if (w?.Telegram?.WebApp) {
-        const user = w.Telegram.WebApp.initDataUnsafe?.user;
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+        const user = window.Telegram.WebApp.initDataUnsafe?.user;
         if (user?.id) {
           setUserId(user.id);
           try {
@@ -28,7 +42,7 @@ export default function KeysPage() {
             const data = await res.json();
             if (data.isActive) setKeys(data);
           } catch (error) {
-            console.error("Error loading keys:", error);
+            console.error('Error loading keys:', error);
           }
         }
       }
@@ -37,51 +51,109 @@ export default function KeysPage() {
     loadKeys();
   }, []);
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (!keys?.vpnUri) return;
-    navigator.clipboard.writeText(keys.vpnUri);
-    const w: any = typeof window !== "undefined" ? (window as any) : undefined;
-    if (w?.Telegram?.WebApp) {
-      w.Telegram.WebApp.showPopup({
-        title: "Скопировано!",
-        message: "VPN ключ скопирован в буфер обмена",
-        buttons: [{ type: "ok" }],
+    await navigator.clipboard.writeText(keys.vpnUri);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    
+    if (window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({
+        title: 'Скопировано!',
+        message: 'VPN ключ скопирован в буфер обмена',
+        buttons: [{ type: 'ok' }],
       });
     }
   };
 
   return (
     <motion.main
-      className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark transition-colors"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24 }}
+      className="min-h-screen pb-28 bg-background dark:bg-surfaceDark"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4 text-textDark dark:text-white">🔑 Мои ключи</h1>
+        <motion.h1 variants={itemVariants} className="text-2xl font-bold mb-4 gradient-text">
+          🔑 Мои ключи
+        </motion.h1>
+        
         {loading ? (
-          <motion.div className="card text-center py-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="text-textLight">Загрузка...</div>
+          <motion.div variants={itemVariants} className="card text-center py-12">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="w-10 h-10 border-3 border-coral border-t-transparent rounded-full mx-auto mb-4"
+            />
+            <div className="text-gray-500">Загрузка...</div>
           </motion.div>
         ) : keys ? (
-          <motion.div className="card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
-            <h2 className="font-semibold mb-3">✅ Активная подписка</h2>
-            <p className="text-sm text-textLight dark:text-white mb-3">
-              Истекает: {keys.expiryDate} ({keys.daysLeft} дней)
-            </p>
-            <div className="rounded-lg border p-3 mb-4 bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700">
-              <p className="text-xs font-mono break-all selection:bg-emerald-500/20 selection:text-slate-900 dark:selection:text-slate-100">{keys.vpnUri}</p>
-            </div>
-            <motion.button whileTap={{ scale: 0.95 }}
-              onClick={copyToClipboard}
-              className="w-full py-2 text-sm font-semibold rounded-md inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 transition-colors"
-            >
-              📋 Скопировать URI
-            </motion.button>
-          </motion.div>
+          <div className="space-y-4">
+            <motion.div variants={itemVariants} className="card">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                <h2 className="font-semibold">Активная подписка</h2>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Истекает: <span className="font-medium text-textDark dark:text-white">{keys.expiryDate}</span>
+                <span className="ml-2 px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs">
+                  {keys.daysLeft} дней
+                </span>
+              </p>
+              
+              <div className="rounded-xl border p-4 mb-4 bg-gray-50 dark:bg-cardDark border-gray-200 dark:border-borderDark">
+                <p className="text-xs font-mono break-all text-gray-600 dark:text-gray-300 select-all">
+                  {keys.vpnUri}
+                </p>
+              </div>
+              
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={copyToClipboard}
+                className={`w-full py-3 text-sm font-semibold rounded-xl inline-flex items-center justify-center gap-2 transition-all ${
+                  copied 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gradient-to-r from-coral to-peach text-white shadow-lg shadow-coral/20'
+                }`}
+              >
+                {copied ? '✓ Скопировано!' : '📋 Скопировать ключ'}
+              </motion.button>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="card">
+              <h2 className="font-semibold mb-3">📱 Как подключиться?</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                Скопируйте ключ и добавьте его в приложение Hiddify
+              </p>
+              <Link href="/guide">
+                <motion.div 
+                  whileHover={{ scale: 1.02, x: 4 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-400"
+                >
+                  <div className="font-semibold">📘 Открыть инструкцию</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Пошаговое руководство</div>
+                </motion.div>
+              </Link>
+            </motion.div>
+          </div>
         ) : (
-          <motion.div className="card text-center py-8" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="text-textLight">Нет активной подписки</div>
+          <motion.div variants={itemVariants} className="card text-center py-12">
+            <div className="text-5xl mb-4">🔒</div>
+            <h2 className="font-semibold text-lg mb-2">Нет активной подписки</h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              Приобретите подписку, чтобы получить VPN ключ
+            </p>
+            <Link href="/buy">
+              <motion.button 
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-6 py-3 bg-gradient-to-r from-coral to-peach text-white font-semibold rounded-xl shadow-lg shadow-coral/20"
+              >
+                💎 Купить подписку
+              </motion.button>
+            </Link>
           </motion.div>
         )}
       </div>

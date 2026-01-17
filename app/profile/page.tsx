@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,19 @@ interface Device {
   last_seen: string;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.4, 0, 0.2, 1] } }
+};
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +44,6 @@ export default function ProfilePage() {
       const user = window.Telegram.WebApp.initDataUnsafe?.user;
       setProfile(user || {});
       
-      // Загрузка списка устройств
       if (user?.id) {
         loadDevices(user.id);
       }
@@ -74,107 +87,104 @@ export default function ProfilePage() {
   };
 
   return (
-      <motion.main
-        className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark text-textDark dark:text-white transition-colors"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24 }}
+    <motion.main
+      className="min-h-screen pb-28 bg-background dark:bg-surfaceDark"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4 text-textDark dark:text-white">👤 Профиль</h1>
-
+        <motion.h1 variants={itemVariants} className="text-2xl font-bold mb-4 gradient-text">
+          👤 Профиль
+        </motion.h1>
+        
         {loading ? (
-          <motion.div
-            className="card text-center py-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-            >
-              <div className="text-textLight dark:text-white">Загрузка...</div>
+          <motion.div variants={itemVariants} className="card text-center py-8">
+            <div className="text-gray-500">Загрузка...</div>
           </motion.div>
         ) : (
           <div className="space-y-4">
-            <motion.div
-              className="card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22 }}
-            >
+            {/* Личная информация */}
+            <motion.div variants={itemVariants} className="card">
               <h2 className="font-semibold mb-3">👋 Личная информация</h2>
               {profile?.id ? (
                 <div className="space-y-2 text-sm">
-                    <p>
-                      <span className="text-textLight dark:text-white">ID пользователя:</span> {profile.id}
-                    </p>
+                  <p>
+                    <span className="text-gray-500 dark:text-gray-400">ID пользователя:</span>{' '}
+                    <span className="font-medium">{profile.id}</span>
+                  </p>
                   {profile.firstName && (
                     <p>
-                        <span className="text-textLight dark:text-white">Имя:</span> {profile.firstName}
-                      {profile.lastName && ` ${profile.lastName}`}
+                      <span className="text-gray-500 dark:text-gray-400">Имя:</span>{' '}
+                      <span className="font-medium">{profile.firstName} {profile.lastName}</span>
                     </p>
                   )}
                 </div>
               ) : (
-                  <p className="text-textLight dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
                   Откройте Mini App через Telegram для отображения вашего профиля
                 </p>
               )}
             </motion.div>
 
             {/* Управление устройствами */}
-            <motion.div
-              className="card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, delay: 0.05 }}
-            >
+            <motion.div variants={itemVariants} className="card">
               <h2 className="font-semibold mb-3">📱 Мои устройства</h2>
-              <p className="text-textLight dark:text-white text-sm mb-3">
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
                 Подключенные устройства (макс. 2):
               </p>
               {loadingDevices ? (
-                <div className="text-center py-4 text-textLight dark:text-white">Загрузка...</div>
+                <div className="text-center py-4 text-gray-500">Загрузка...</div>
               ) : devices.length > 0 ? (
-                  <div className="space-y-2">
-                    {devices.map((device, idx) => (
-                      <div key={idx} className="p-3 bg-blueGray-900 border border-borderDark rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <p className="text-xs text-blueGray-100 break-all">{device.device_id}</p>
-                            <p className="text-xs text-blueGray-300 mt-1">IP: {device.ip}</p>
-                            <p className="text-xs text-blueGray-300">
-                              Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
-                            </p>
-                          </div>
-                          <motion.button whileTap={{ scale: 0.95 }}
-                            onClick={() => handleRemoveDevice(device.device_id)}
-                            className="ml-2 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs rounded transition-colors"
-                          >
-                            ✕
-                          </motion.button>
+                <div className="space-y-2">
+                  {devices.map((device, idx) => (
+                    <motion.div 
+                      key={idx} 
+                      className="p-3 bg-gray-50 dark:bg-cardDark border border-gray-200 dark:border-borderDark rounded-xl"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1 }}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="text-xs font-mono text-gray-600 dark:text-gray-300 break-all">
+                            {device.device_id.slice(0, 20)}...
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">IP: {device.ip}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
+                          </p>
                         </div>
+                        <motion.button 
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleRemoveDevice(device.device_id)}
+                          className="ml-2 w-8 h-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center text-sm"
+                        >
+                          ✕
+                        </motion.button>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-textLight dark:text-white text-sm text-center py-4">
-                    Нет подключенных устройств
-                  </p>
-                )}
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
+                  Нет подключенных устройств
+                </p>
+              )}
             </motion.div>
 
-            <motion.div
-              className="card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, delay: 0.1 }}
-            >
+            {/* Пользовательское соглашение */}
+            <motion.div variants={itemVariants} className="card">
               <h2 className="font-semibold mb-3">📄 Пользовательское соглашение</h2>
-              <motion.button whileTap={{ scale: 0.95 }}
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowTerms(true)}
-                className="w-full p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:border-blue-400 transition-colors text-left"
+                className="w-full p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-400 text-left"
               >
-                <div className="font-semibold text-textDark dark:text-white">Условия использования</div>
-                <div className="text-xs text-textLight dark:text-white">Нажмите, чтобы прочитать</div>
+                <div className="font-semibold">Условия использования</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Нажмите, чтобы прочитать</div>
               </motion.button>
             </motion.div>
 
@@ -182,7 +192,7 @@ export default function ProfilePage() {
             <AnimatePresence>
               {showTerms && (
                 <motion.div
-                  className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -196,105 +206,81 @@ export default function ProfilePage() {
                     transition={{ type: 'spring', damping: 25, stiffness: 300 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="sticky top-0 bg-white dark:bg-surfaceDark border-b border-borderLight dark:border-borderDark p-4 flex justify-between items-center">
-                      <h2 className="text-xl font-bold text-textDark dark:text-white">📄 Пользовательское соглашение</h2>
-                      <motion.button whileTap={{ scale: 0.95 }}
+                    <div className="sticky top-0 bg-white dark:bg-surfaceDark border-b border-gray-200 dark:border-borderDark p-4 flex justify-between items-center">
+                      <h2 className="text-xl font-bold">📄 Пользовательское соглашение</h2>
+                      <motion.button 
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => setShowTerms(false)}
-                        className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xl"
+                        className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl"
                       >
                         ✕
                       </motion.button>
                     </div>
-                    <div className="p-4 overflow-y-auto max-h-[calc(85vh-60px)] text-sm text-textDark dark:text-white space-y-4">
+                    <div className="p-4 overflow-y-auto max-h-[calc(85vh-60px)] text-sm space-y-4">
                       <section>
                         <h3 className="font-bold text-base mb-2">Условия использования</h3>
-                        <p>Используя Nyxion, вы автоматически соглашаетесь с этими условиями использования и обязуетесь не нарушать законодательство Российской Федерации или других государств.</p>
+                        <p className="text-gray-600 dark:text-gray-300">Используя Nyxion, вы автоматически соглашаетесь с этими условиями использования и обязуетесь не нарушать законодательство.</p>
                       </section>
-
                       <section>
                         <h3 className="font-bold text-base mb-2">Сервис</h3>
-                        <p>VPN-сервис обеспечивает конфиденциальность личной информации путем шифрования и анонимизации метаданных пользователя, скрывая его IP-адрес. Эти адреса используют множество других пользователей, что не только обеспечивает конфиденциальность для каждого из них, но и затрудняет определение характера их деятельности. Мы не изменяем, не перенаправляем и не внедряемся в пользовательский трафик.</p>
+                        <p className="text-gray-600 dark:text-gray-300">VPN-сервис обеспечивает конфиденциальность личной информации путем шифрования и анонимизации метаданных пользователя.</p>
                       </section>
-
                       <section>
                         <h3 className="font-bold text-base mb-2">Демо период</h3>
-                        <p>Всем пользователям доступен демо период в течение трех дней с момента авторизации в приложении.</p>
+                        <p className="text-gray-600 dark:text-gray-300">Всем пользователям доступен демо период в течение трех дней.</p>
                       </section>
-
-                      <section>
-                        <h3 className="font-bold text-base mb-2">Автоматическое продление</h3>
-                        <p>Оплачивая подписку, вы соглашаетесь на автоматическое продление. Уведомление о том, что подписка закончится, приходит за один день до окончания подписки. Автоматическое продление можно отключить в любой момент в разделе «Профиль» → «Оплата».</p>
-                      </section>
-
-                      <section>
-                        <h3 className="font-bold text-base mb-2">Использование подписки</h3>
-                        <p>Подписка предоставляет право использования сервиса на ограниченном количестве устройств в соответствии с выбранным тарифным планом (от 1 до 5 устройств). Использование одной подписки на большем количестве устройств, чем предусмотрено вашим тарифом, считается злоупотреблением условиями использования сервиса. В случае выявления таких нарушений мы оставляем за собой право временно ограничить доступ к сервису или заблокировать учетную запись без компенсации неиспользованного периода подписки.</p>
-                      </section>
-
-                      <section>
-                        <h3 className="font-bold text-base mb-2">Изменение стоимости подписки</h3>
-                        <p>Мы оставляем за собой право изменять стоимость подписки. В случае повышения стоимости более чем на 10%, вы будете уведомлены заранее. Изменения вступают в силу со следующего платежного периода.</p>
-                      </section>
-
-                      <section>
-                        <h3 className="font-bold text-base mb-2">Политика возврата</h3>
-                        <p><strong>Условия возврата:</strong> вы можете запросить возврат средств, если полученные услуги были некачественными или не предоставлены в соответствии с условиями.</p>
-                        <p><strong>Процедура возврата:</strong> Для запроса возврата, свяжитесь с нашей службой поддержки по указанным контактным данным. Мы рассмотрим ваш запрос и произведем возврат средств.</p>
-                        <p><strong>Сроки возврата:</strong> Мы рассмотрим ваш запрос в течение дня. Срок исполнения возврата зависит от вашего банка.</p>
-                      </section>
-
                       <section>
                         <h3 className="font-bold text-base mb-2">Конфиденциальность</h3>
-                        <p>Мы полностью сохраняем вашу анонимность при использовании нашего сервиса. Поэтому мы не собираем и не храним данные о вашей онлайн-активности и не передаем их третьим сторонам. Мы применяем передовые методы шифрования для защиты вашей информации.</p>
+                        <p className="text-gray-600 dark:text-gray-300">Мы не собираем и не храним данные о вашей онлайн-активности.</p>
                       </section>
-
-                      <section>
-                        <h3 className="font-bold text-base mb-2">Отказ от ответственности</h3>
-                        <p>Мы оставляем за собой право изменять сервис, обновляя наше программное обеспечение или внося изменения в определенные функции. Мы стремимся минимизировать сбои и ошибки. Несмотря на наши усилия, сервис предоставляется на условиях «как есть» и «по мере доступности». Вы несете единоличную ответственность за использование вами сервиса.</p>
-                      </section>
-
-                      <p className="text-xs text-gray-500 dark:text-gray-400 pt-4 border-t border-borderLight dark:border-borderDark">Последнее обновление: январь 2026</p>
+                      <p className="text-xs text-gray-500 pt-4 border-t border-gray-200 dark:border-borderDark">Последнее обновление: январь 2026</p>
                     </div>
                   </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <motion.div
-              className="card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, delay: 0.1 }}
-            >
+            {/* Быстрые ссылки */}
+            <motion.div variants={itemVariants} className="card">
               <h2 className="font-semibold mb-3">🔗 Быстрые ссылки</h2>
               <div className="space-y-2">
-                <a href="/guide" className="block p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:border-blue-400 transition-colors text-textDark dark:text-white">
-                  <div className="font-semibold">📘 Инструкция</div>
-                  <div className="text-xs text-textLight dark:text-white">Как подключиться к VPN</div>
-                </a>
-                <a href="/buy" className="block p-3 bg-green-500/10 rounded-lg border border-green-500/20 hover:border-green-400 transition-colors text-textDark dark:text-white">
-                  <div className="font-semibold">💳 Купить подписку</div>
-                  <div className="text-xs text-textLight dark:text-white">Активировать доступ VPN</div>
-                </a>
+                <Link href="/guide">
+                  <motion.div 
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="block p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 hover:border-blue-400"
+                  >
+                    <div className="font-semibold">📘 Инструкция</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Как подключиться к VPN</div>
+                  </motion.div>
+                </Link>
+                <Link href="/buy">
+                  <motion.div 
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="block p-3 bg-green-500/10 rounded-xl border border-green-500/20 hover:border-green-400 mt-2"
+                  >
+                    <div className="font-semibold">💳 Купить подписку</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">Активировать доступ VPN</div>
+                  </motion.div>
+                </Link>
               </div>
             </motion.div>
 
-            <motion.div
-              className="card"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, delay: 0.15 }}
-            >
-                <h2 className="font-semibold mb-3">❓ Поддержка</h2>
-                <p className="text-textLight dark:text-white text-sm mb-3">Возникли проблемы? Свяжитесь с нами:</p>
-              <a 
+            {/* Поддержка */}
+            <motion.div variants={itemVariants} className="card">
+              <h2 className="font-semibold mb-3">❓ Поддержка</h2>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">Возникли проблемы? Свяжитесь с нами:</p>
+              <motion.a 
                 href="https://t.me/nyxion_support" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="block w-full p-3 bg-orange-500/10 rounded-lg border border-orange-500/20 hover:border-orange-400 transition-colors font-semibold text-sm text-center"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="block w-full p-3 bg-gradient-to-r from-coral/20 to-peach/20 rounded-xl border border-coral/30 hover:border-coral font-semibold text-sm text-center"
               >
                 💬 Написать в поддержку
-              </a>
+              </motion.a>
             </motion.div>
           </div>
         )}

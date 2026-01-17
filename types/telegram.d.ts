@@ -5,12 +5,15 @@ declare global {
         ready: () => void;
         expand: () => void;
         close: () => void;
+        openLink: (url: string) => void;
+        openTelegramLink: (url: string) => void;
         initDataUnsafe?: {
           user?: {
             id: number;
             first_name: string;
             last_name?: string;
             username?: string;
+            photo_url?: string;
           };
         };
         setHeaderColor: (color: string) => void;
