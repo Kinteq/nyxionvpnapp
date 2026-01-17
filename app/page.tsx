@@ -145,13 +145,13 @@ export default function Home() {
               className="w-full px-4 py-3 bg-white dark:bg-blueGray-900 border border-borderLight dark:border-borderDark rounded-lg focus:border-coral focus:outline-none transition-colors text-textDark dark:text-white placeholder-gray-400"
               disabled={submitting}
             />
-            <button
+            <motion.button whileTap={{ scale: 0.95 }}
               onClick={handleActivatePromo}
               disabled={submitting || !promoCode.trim() || !userId}
               className="w-full py-3 bg-gradient-to-r from-coral to-peach rounded-lg font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-coral/30 transition-all"
             >
               {submitting ? '⏳ Активация...' : '✨ Активировать'}
-            </button>
+            </motion.button>
             {!userId && (
               <div className="text-xs text-red-400">
                 Откройте Mini App в Telegram, чтобы активировать промокод
@@ -217,7 +217,7 @@ export default function Home() {
             <p className="mb-4 opacity-90">30 дней безлимитного VPN всего за 150₽</p>
             <button className="btn-secondary w-full">
               💎 Купить VPN
-            </button>
+            </motion.button>
           </motion.div>
         )}
       </div>

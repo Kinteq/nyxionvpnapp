@@ -45,7 +45,7 @@ const PLANS = [
     name: '1 год',
     days: 365,
     price: 1190,
-    priceUSDT: 15.28,
+    priceUSDT: 0.5,
     priceTON: 8.81,
     priceBTC: 0.00016,
     popular: false,

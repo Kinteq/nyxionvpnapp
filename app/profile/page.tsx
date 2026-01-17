@@ -145,12 +145,12 @@ export default function ProfilePage() {
                               Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
                             </p>
                           </div>
-                          <button
+                          <motion.button whileTap={{ scale: 0.95 }}
                             onClick={() => handleRemoveDevice(device.device_id)}
                             className="ml-2 px-2 py-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-xs rounded transition-colors"
                           >
                             ✕
-                          </button>
+                          </motion.button>
                         </div>
                       </div>
                     ))}
@@ -169,13 +169,13 @@ export default function ProfilePage() {
               transition={{ duration: 0.22, delay: 0.1 }}
             >
               <h2 className="font-semibold mb-3">📄 Пользовательское соглашение</h2>
-              <button
+              <motion.button whileTap={{ scale: 0.95 }}
                 onClick={() => setShowTerms(true)}
                 className="w-full p-3 bg-blue-500/10 rounded-lg border border-blue-500/20 hover:border-blue-400 transition-colors text-left"
               >
                 <div className="font-semibold text-textDark dark:text-white">Условия использования</div>
                 <div className="text-xs text-textLight dark:text-white">Нажмите, чтобы прочитать</div>
-              </button>
+              </motion.button>
             </motion.div>
 
             {/* Terms Modal */}
@@ -198,12 +198,12 @@ export default function ProfilePage() {
                   >
                     <div className="sticky top-0 bg-white dark:bg-surfaceDark border-b border-borderLight dark:border-borderDark p-4 flex justify-between items-center">
                       <h2 className="text-xl font-bold text-textDark dark:text-white">📄 Пользовательское соглашение</h2>
-                      <button
+                      <motion.button whileTap={{ scale: 0.95 }}
                         onClick={() => setShowTerms(false)}
                         className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xl"
                       >
                         ✕
-                      </button>
+                      </motion.button>
                     </div>
                     <div className="p-4 overflow-y-auto max-h-[calc(85vh-60px)] text-sm text-textDark dark:text-white space-y-4">
                       <section>

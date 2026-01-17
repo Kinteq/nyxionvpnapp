@@ -82,7 +82,7 @@ export default function GuidePage() {
           <h3 className="font-semibold mb-3 text-textDark dark:text-white">📲 Скачать Hiddify</h3>
           <div className="grid grid-cols-2 gap-2">
             {platforms.map((p) => (
-              <button
+              <motion.button whileTap={{ scale: 0.95 }}
                 key={p.id}
                 onClick={() => setSelectedPlatform(p.id as any)}
                 className={`p-3 rounded-xl border-2 transition-all text-left ${
@@ -94,7 +94,7 @@ export default function GuidePage() {
                 <span className="text-2xl">{p.icon}</span>
                 <div className="font-semibold text-sm mt-1 text-textDark dark:text-white">{p.name}</div>
                 {p.note && <div className="text-xs text-yellow-500 mt-1">{p.note}</div>}
-              </button>
+              </motion.button>
             ))}
           </div>
 
