@@ -1,7 +1,7 @@
 'use client';
 
-import Header from '@/components/Header';
-import Navigation from '@/components/Navigation';
+
+
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 
@@ -42,12 +42,12 @@ export default function GuidePage() {
 
   return (
     <motion.main
-      className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark"
+      className="min-h-screen bg-[#f8f9fb] dark:bg-surfaceDark"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
     >
-      <Header />
+      
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold mb-2 text-textDark dark:text-white">📘 Инструкция по подключению</h1>
         <p className="text-textLight dark:text-white text-sm mb-6">Пошаговое руководство для быстрого подключения</p>
@@ -238,7 +238,7 @@ export default function GuidePage() {
           🔑 Открыть мои ключи
         </motion.a>
       </div>
-      <Navigation />
+      
     </motion.main>
   );
 }
