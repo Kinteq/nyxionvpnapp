@@ -69,8 +69,8 @@ export default function KeysPage() {
             <p className="text-sm text-textLight mb-3">
               Истекает: {keys.expiryDate} ({keys.daysLeft} дней)
             </p>
-            <div className="bg-gray-800/50 rounded-lg p-3 mb-4">
-              <p className="text-xs font-mono break-all text-green-400">
+            <div className="rounded-lg border p-3 mb-4 bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700">
+              <p className="text-xs font-mono break-all selection:bg-emerald-500/20 selection:text-slate-900 dark:selection:text-slate-100">
                 {keys.vpnUri}
               </p>
             </div>
@@ -81,7 +81,7 @@ export default function KeysPage() {
                   alert('URI скопирован');
                 }
               }}
-              className="w-full py-2 bg-blue-500 hover:bg-blue-600 rounded-lg font-semibold transition-colors"
+              className="w-full py-2 text-sm font-semibold rounded-md inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/60 transition-colors"
             >
               📋 Копировать URI
             </button>
