@@ -4,6 +4,7 @@ import Script from "next/script";
 import { RouteTransition } from "../components/RouteTransition";
 import Navigation from "../components/Navigation";
 import { ThemeProvider } from "../components/ThemeProvider";
+import Header from "../components/Header";
 
 export const metadata: Metadata = {
   title: "Nyxion VPN",
@@ -37,6 +38,7 @@ export default function RootLayout({
       </head>
       <body className="overflow-x-hidden flex flex-col min-h-screen">
         <ThemeProvider>
+          <Header />
           <div className="flex-1 overflow-y-auto pb-20">
             <RouteTransition>{children}</RouteTransition>
           </div>

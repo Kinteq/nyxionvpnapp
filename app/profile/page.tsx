@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/Header';
-import Navigation from '@/components/Navigation';
 import { motion } from 'framer-motion';
 
 export const dynamic = 'force-dynamic';
@@ -11,12 +9,6 @@ interface UserProfile {
   id?: number;
   firstName?: string;
   lastName?: string;
-}
-
-interface PromoResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
 }
 
 interface Device {
@@ -29,9 +21,6 @@ interface Device {
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [promoCode, setPromoCode] = useState('');
-  const [promoStatus, setPromoStatus] = useState<PromoResponse | null>(null);
-  const [submitting, setSubmitting] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [loadingDevices, setLoadingDevices] = useState(false);
 
@@ -83,48 +72,13 @@ export default function ProfilePage() {
     }
   };
 
-  const handleActivatePromo = async () => {
-    if (!profile?.id || !promoCode.trim()) {
-      setPromoStatus({ success: false, error: 'Введите промокод' });
-      return;
-    }
-
-    setSubmitting(true);
-    setPromoStatus(null);
-
-    try {
-      const response = await fetch('/api/activate-promo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: profile.id,
-          promoCode: promoCode.trim().toUpperCase(),
-        }),
-      });
-
-      const data = await response.json();
-      setPromoStatus(data);
-
-      if (data.success) {
-        setPromoCode('');
-        // Перезагрузка подписки
-        setTimeout(() => window.location.href = '/', 1500);
-      }
-    } catch (error) {
-      setPromoStatus({ success: false, error: 'Ошибка сети' });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <motion.main
-      className="min-h-screen pb-20"
+      className="min-h-screen pb-20 bg-[#f8f9fb] dark:bg-surfaceDark transition-colors"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.24 }}
     >
-      <Header />
       <div className="px-4 py-6">
         <h1 className="text-2xl font-bold mb-4">👤 Профиль</h1>
 
@@ -213,39 +167,16 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, delay: 0.1 }}
             >
-              <h2 className="font-semibold mb-3">🎁 Промокод</h2>
-              <p className="text-textLight text-sm mb-3">
-                Есть промокод? Активируйте его здесь:
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="Введите промокод"
-                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:border-blue-500 focus:outline-none transition-colors text-white placeholder-gray-500"
-                  disabled={submitting}
-                />
-                <button
-                  onClick={handleActivatePromo}
-                  disabled={submitting || !promoCode.trim()}
-                  className="w-full py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-lg font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
-                >
-                  {submitting ? '⏳ Активация...' : '✨ Активировать'}
-                </button>
-                {promoStatus && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`p-3 rounded-lg text-sm ${
-                      promoStatus.success
-                        ? 'bg-green-500/10 border border-green-500/20 text-green-400'
-                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
-                    }`}
-                  >
-                    {promoStatus.success ? promoStatus.message : promoStatus.error}
-                  </motion.div>
-                )}
+              <h2 className="font-semibold mb-3">📄 Пользовательское соглашение</h2>
+              <div className="space-y-2 text-sm text-textLight">
+                <p>Используя Nyxion VPN, вы подтверждаете согласие со следующими условиями:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Не используйте сервис для незаконной деятельности.</li>
+                  <li>Не распространяйте ваш доступ третьим лицам.</li>
+                  <li>Мы не храним логи вашей активности в сети.</li>
+                  <li>Поддержка доступна 24/7, пишите при любых проблемах.</li>
+                </ul>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Последнее обновление: январь 2026</p>
               </div>
             </motion.div>
 
@@ -283,7 +214,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-      <Navigation />
     </motion.main>
   );
 }
