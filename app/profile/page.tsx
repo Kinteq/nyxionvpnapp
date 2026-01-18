@@ -75,7 +75,7 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4 gradient-text">
+        <h1 className="text-2xl font-bold mb-4 gradient-text animate-fade-in">
           👤 Профиль
         </h1>
         
@@ -86,7 +86,7 @@ export default function ProfilePage() {
         ) : (
           <div className="space-y-4">
             {/* Личная информация */}
-            <div className="card">
+            <div className="card card-animated stagger-1">
               <h2 className="font-semibold mb-3">👋 Личная информация</h2>
               {profile?.id ? (
                 <div className="space-y-2 text-sm">
@@ -109,7 +109,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Управление устройствами */}
-            <div className="card">
+            <div className="card card-animated stagger-2">
               <h2 className="font-semibold mb-3">📱 Мои устройства</h2>
               <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
                 Подключенные устройства (макс. 2):
@@ -135,7 +135,7 @@ export default function ProfilePage() {
                         </div>
                         <button 
                           onClick={() => handleRemoveDevice(device.device_id)}
-                          className="ml-2 w-8 h-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center text-sm active:scale-90 transition-transform"
+                          className="ml-2 w-8 h-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center text-sm active:scale-90 transition-all duration-200"
                         >
                           ✕
                         </button>
@@ -151,11 +151,11 @@ export default function ProfilePage() {
             </div>
 
             {/* Пользовательское соглашение */}
-            <div className="card">
+            <div className="card card-animated stagger-3">
               <h2 className="font-semibold mb-3">📄 Пользовательское соглашение</h2>
               <button 
                 onClick={() => setShowTerms(true)}
-                className="w-full p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-left active:scale-[0.98] transition-transform"
+                className="w-full p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 text-left active:scale-[0.98] transition-all duration-200"
               >
                 <div className="font-semibold">Условия использования</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Нажмите, чтобы прочитать</div>
@@ -165,18 +165,18 @@ export default function ProfilePage() {
             {/* Terms Modal */}
             {showTerms && (
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center animate-fade-in"
                 onClick={() => setShowTerms(false)}
               >
                 <div
-                  className="bg-white dark:bg-surfaceDark w-full max-h-[85vh] rounded-t-3xl overflow-hidden"
+                  className="bg-white dark:bg-surfaceDark w-full max-h-[85vh] rounded-t-3xl overflow-hidden animate-fade-in-up"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="sticky top-0 bg-white dark:bg-surfaceDark border-b border-gray-200 dark:border-borderDark p-4 flex justify-between items-center">
                     <h2 className="text-xl font-bold">📄 Пользовательское соглашение</h2>
                     <button 
                       onClick={() => setShowTerms(false)}
-                      className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl active:scale-90 transition-transform"
+                      className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xl active:scale-90 transition-all duration-200"
                     >
                       ✕
                     </button>
@@ -205,11 +205,11 @@ export default function ProfilePage() {
             )}
 
             {/* Быстрые ссылки */}
-            <div className="card">
+            <div className="card card-animated stagger-4">
               <h2 className="font-semibold mb-3">🔗 Быстрые ссылки</h2>
               <div className="space-y-2">
                 <Link href="/guide">
-                  <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-transform">
+                  <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-all duration-200">
                     <div className="font-semibold">📘 Инструкция по подключению</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">Пошаговое руководство</div>
                   </div>
@@ -218,7 +218,7 @@ export default function ProfilePage() {
                   href="https://t.me/nyxion_support" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="block p-3 bg-green-500/10 rounded-xl border border-green-500/20 active:scale-[0.98] transition-transform"
+                  className="block p-3 bg-green-500/10 rounded-xl border border-green-500/20 active:scale-[0.98] transition-all duration-200"
                 >
                   <div className="font-semibold">💬 Поддержка</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Написать в Telegram</div>

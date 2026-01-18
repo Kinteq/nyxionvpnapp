@@ -66,12 +66,12 @@ export default function BuyPage() {
   return (
     <main className="min-h-screen bg-background dark:bg-surfaceDark text-textDark dark:text-white">
       <div className="px-4 py-6 pb-28">
-        <h1 className="text-3xl font-bold mb-6 gradient-text">
+        <h1 className="text-3xl font-bold mb-6 gradient-text animate-fade-in">
           💎 Купить подписку
         </h1>
         
         {/* Что входит */}
-        <div className="card mb-6">
+        <div className="card mb-6 card-animated stagger-1">
           <h2 className="text-xl font-bold mb-3">Что входит в подписку:</h2>
           <ul className="space-y-2">
             {['✅ Безлимитный трафик', '✅ Скорость до 1 Гбит/с', '✅ 2 устройства', '✅ Без логов', '✅ Поддержка 24/7'].map((item, i) => (
@@ -81,14 +81,14 @@ export default function BuyPage() {
         </div>
 
         {/* Выбор периода */}
-        <div className="card mb-6">
+        <div className="card mb-6 card-animated stagger-2">
           <h3 className="text-xl font-bold mb-4">Выберите период</h3>
           <div className="grid grid-cols-2 gap-3">
             {PLANS.map((plan) => (
               <button 
                 key={plan.id} 
                 onClick={() => setSelectedPlan(plan)}
-                className={`relative p-4 rounded-xl border-2 text-left active:scale-[0.97] transition-transform ${
+                className={`relative p-4 rounded-xl border-2 text-left active:scale-[0.97] transition-all duration-200 ${
                   selectedPlan.id === plan.id
                     ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20'
                     : 'border-gray-200 dark:border-borderDark'
@@ -115,7 +115,7 @@ export default function BuyPage() {
         </div>
 
         {/* Способ оплаты */}
-        <div className="card mb-6">
+        <div className="card mb-6 card-animated stagger-3">
           <h3 className="text-xl font-bold mb-4">Способ оплаты</h3>
           <div className="space-y-3">
             <button 
@@ -156,14 +156,14 @@ export default function BuyPage() {
 
         {/* Выбор криптовалюты */}
         {selectedMethod === 'cryptobot' && (
-          <div className="card mb-6">
+          <div className="card mb-6 animate-scale-in">
             <h3 className="text-xl font-bold mb-4">Криптовалюта</h3>
             <div className="grid grid-cols-3 gap-3">
               {(['USDT', 'TON', 'BTC'] as const).map((asset) => (
                 <button 
                   key={asset} 
                   onClick={() => setSelectedAsset(asset)}
-                  className={`p-4 rounded-xl border-2 font-bold text-lg active:scale-[0.95] transition-transform ${
+                  className={`p-4 rounded-xl border-2 font-bold text-lg active:scale-[0.95] transition-all duration-200 ${
                     selectedAsset === asset
                       ? 'border-coral bg-gradient-to-br from-coral to-peach text-white shadow-lg shadow-coral/30'
                       : 'border-gray-200 dark:border-borderDark'
@@ -180,7 +180,7 @@ export default function BuyPage() {
         )}
 
         {/* Итого */}
-        <div className="card mb-6 bg-gradient-to-br from-coral/10 to-peach/10 border-coral/30">
+        <div className="card mb-6 bg-gradient-to-br from-coral/10 to-peach/10 border-coral/30 card-animated stagger-4">
           <div className="flex justify-between items-center">
             <div>
               <div className="text-lg font-bold">{selectedPlan.name}</div>
@@ -201,7 +201,7 @@ export default function BuyPage() {
         <button 
           onClick={handlePurchase}
           disabled={loading || selectedMethod === 'yukassa' || !userId}
-          className={`w-full font-bold rounded-2xl text-xl py-5 px-8 mb-4 active:scale-[0.98] transition-transform ${
+          className={`w-full font-bold rounded-2xl text-xl py-5 px-8 mb-4 active:scale-[0.98] transition-all duration-200 card-animated stagger-5 ${
             selectedMethod === 'yukassa' || !userId
               ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
               : 'bg-gradient-to-r from-coral to-peach text-white shadow-lg shadow-coral/30'

@@ -55,7 +55,7 @@ export default function KeysPage() {
   return (
     <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-4 gradient-text">
+        <h1 className="text-2xl font-bold mb-4 gradient-text animate-fade-in">
           🔑 Мои ключи
         </h1>
         
@@ -66,7 +66,7 @@ export default function KeysPage() {
           </div>
         ) : keys ? (
           <div className="space-y-4">
-            <div className="card">
+            <div className="card card-animated stagger-1">
               <div className="flex items-center gap-2 mb-3">
                 <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
                 <h2 className="font-semibold">Активная подписка</h2>
@@ -86,7 +86,7 @@ export default function KeysPage() {
               
               <button 
                 onClick={copyToClipboard}
-                className={`w-full py-3 text-sm font-semibold rounded-xl inline-flex items-center justify-center gap-2 active:scale-[0.98] transition-transform ${
+                className={`w-full py-3 text-sm font-semibold rounded-xl inline-flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 ${
                   copied 
                     ? 'bg-green-500 text-white' 
                     : 'bg-gradient-to-r from-coral to-peach text-white shadow-lg shadow-coral/20'
@@ -96,13 +96,13 @@ export default function KeysPage() {
               </button>
             </div>
 
-            <div className="card">
+            <div className="card card-animated stagger-2">
               <h2 className="font-semibold mb-3">📱 Как подключиться?</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                 Скопируйте ключ и добавьте его в приложение Hiddify
               </p>
               <Link href="/guide">
-                <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-transform">
+                <div className="p-3 bg-blue-500/10 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-all duration-200">
                   <div className="font-semibold">📘 Открыть инструкцию</div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">Пошаговое руководство</div>
                 </div>
@@ -110,14 +110,14 @@ export default function KeysPage() {
             </div>
           </div>
         ) : (
-          <div className="card text-center py-12">
+          <div className="card text-center py-12 card-animated">
             <div className="text-5xl mb-4">🔒</div>
             <h2 className="font-semibold text-lg mb-2">Нет активной подписки</h2>
             <p className="text-gray-500 dark:text-gray-400 mb-6">
               Приобретите подписку, чтобы получить VPN ключ
             </p>
             <Link href="/buy">
-              <button className="px-6 py-3 bg-gradient-to-r from-coral to-peach text-white font-semibold rounded-xl shadow-lg shadow-coral/20 active:scale-[0.97] transition-transform">
+              <button className="px-6 py-3 bg-gradient-to-r from-coral to-peach text-white font-semibold rounded-xl shadow-lg shadow-coral/20 active:scale-[0.97] transition-all duration-200">
                 💎 Купить подписку
               </button>
             </Link>

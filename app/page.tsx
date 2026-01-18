@@ -107,7 +107,7 @@ export default function Home() {
     <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6 space-y-6">
         {/* Welcome Section */}
-        <div className="text-center">
+        <div className="text-center animate-fade-in">
           <h1 className="text-3xl font-bold gradient-text mb-2">
             Добро пожаловать в Nyxion VPN
           </h1>
@@ -117,10 +117,12 @@ export default function Home() {
         </div>
 
         {/* Subscription Card */}
-        <SubscriptionCard subscription={subscription} />
+        <div className="card-animated stagger-2">
+          <SubscriptionCard subscription={subscription} />
+        </div>
 
         {/* Promo Code */}
-        <div className="card">
+        <div className="card card-animated stagger-3">
           <h2 className="font-semibold mb-3">🎁 Промокод</h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
             Есть промокод? Активируйте его здесь:
@@ -148,7 +150,7 @@ export default function Home() {
             )}
             {promoStatus && (
               <div
-                className={`p-3 rounded-xl text-sm ${
+                className={`p-3 rounded-xl text-sm animate-scale-in ${
                   promoStatus.success
                     ? 'bg-green-500/10 border border-green-500/20 text-green-500'
                     : 'bg-red-500/10 border border-red-500/20 text-red-400'
@@ -168,7 +170,7 @@ export default function Home() {
             { icon: '🌍', title: 'Без ограничений', desc: 'Безлимитный трафик' },
             { icon: '⏱', title: '24/7 Доступ', desc: 'Всегда на связи' },
           ].map((feature, i) => (
-            <div key={i} className="card text-center">
+            <div key={i} className={`card text-center card-animated stagger-${i + 2}`}>
               <div className="text-3xl mb-2">{feature.icon}</div>
               <h3 className="font-semibold mb-1">{feature.title}</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">{feature.desc}</p>
@@ -178,7 +180,7 @@ export default function Home() {
 
         {/* CTA */}
         {!subscription?.isActive && (
-          <div className="card bg-nyxion-gradient text-white text-center overflow-hidden">
+          <div className="card bg-nyxion-gradient text-white text-center overflow-hidden card-animated stagger-5">
             <h2 className="text-2xl font-bold mb-2">Начните прямо сейчас!</h2>
             <p className="mb-4 opacity-90">30 дней безлимитного VPN всего за 150₽</p>
             <button 

@@ -19,9 +19,11 @@ export default function Header({ user }: HeaderProps) {
   const { theme, resolvedTheme, setTheme } = useThemeContext();
   const [internalUser, setInternalUser] = useState<TgUser | null>(user ?? null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [overlayTheme, setOverlayTheme] = useState<'light' | 'dark'>('light');
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [circleRadius, setCircleRadius] = useState(0);
   const [circlePos, setCirclePos] = useState({ x: 0, y: 0 });
+  const [pendingTheme, setPendingTheme] = useState<'light' | 'dark' | 'system' | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const animationFrameRef = useRef<number>(0);
 
   useEffect(() => {
     if (user) {
@@ -52,15 +54,18 @@ export default function Header({ user }: HeaderProps) {
     return { type: 'text' as const, value: initials || '🙂' };
   }, [internalUser]);
 
+  // Рассчитываем максимальный радиус для покрытия экрана
+  const maxRadius = useMemo(() => {
+    if (typeof window === 'undefined') return 2000;
+    return Math.sqrt(Math.pow(window.innerWidth, 2) + Math.pow(window.innerHeight, 2)) * 1.2;
+  }, []);
+
   const cycleTheme = useCallback(() => {
     if (isAnimating) return;
     
     const next = theme === 'system' ? 'light' : theme === 'light' ? 'dark' : 'system';
-    const nextResolved = next === 'system' 
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : next;
     
-    // Позиция кнопки для центра круга
+    // Позиция кнопки
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       setCirclePos({
@@ -69,52 +74,73 @@ export default function Header({ user }: HeaderProps) {
       });
     }
     
-    // Overlay будет цвета НОВОЙ темы (та, на которую переключаемся)
-    setOverlayTheme(nextResolved);
+    setPendingTheme(next);
+    setCircleRadius(0);
     setIsAnimating(true);
     
-    // Сначала запускаем анимацию, потом меняем тему когда круг достаточно большой
-    setTimeout(() => {
-      setTheme(next);
-    }, 250);
+    // Анимируем радиус
+    let start: number | null = null;
+    const duration = 500; // ms
     
-    // Заканчиваем анимацию
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 600);
-  }, [theme, setTheme, isAnimating]);
+    const animate = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      
+      // Easing - ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCircleRadius(eased * maxRadius);
+      
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Анимация закончена, применяем тему
+        setTheme(next);
+        
+        // Небольшая задержка перед скрытием overlay
+        setTimeout(() => {
+          setIsAnimating(false);
+          setPendingTheme(null);
+          setCircleRadius(0);
+        }, 50);
+      }
+    };
+    
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, [theme, setTheme, isAnimating, maxRadius]);
+
+  // Cleanup animation frame
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '☀️' : '🌙';
   
-  // Рассчитываем радиус для покрытия всего экрана
-  const maxRadius = typeof window !== 'undefined' 
-    ? Math.sqrt(Math.pow(window.innerWidth, 2) + Math.pow(window.innerHeight, 2)) * 1.2
-    : 2000;
+  // Определяем цвет overlay - это будет цвет НОВОЙ темы
+  const overlayColor = useMemo(() => {
+    if (!pendingTheme) return '#0B1220';
+    const nextResolved = pendingTheme === 'system' 
+      ? (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : pendingTheme;
+    return nextResolved === 'dark' ? '#0B1220' : '#F8FAFC';
+  }, [pendingTheme]);
 
   return (
     <>
-      {/* Theme transition overlay with circular reveal */}
+      {/* Theme transition overlay */}
       {isAnimating && (
         <div
           className="fixed inset-0 z-[9999] pointer-events-none"
           style={{
-            background: overlayTheme === 'dark' ? '#0B1220' : '#F8FAFC',
-            clipPath: `circle(0% at ${circlePos.x}px ${circlePos.y}px)`,
-            animation: 'themeReveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+            background: overlayColor,
+            clipPath: `circle(${circleRadius}px at ${circlePos.x}px ${circlePos.y}px)`,
+            willChange: 'clip-path',
           }}
         />
       )}
-      
-      <style jsx>{`
-        @keyframes themeReveal {
-          0% {
-            clip-path: circle(0% at ${circlePos.x}px ${circlePos.y}px);
-          }
-          100% {
-            clip-path: circle(${maxRadius}px at ${circlePos.x}px ${circlePos.y}px);
-          }
-        }
-      `}</style>
 
       <header className="bg-nyxion-gradient px-4 py-4 text-white shadow-lg sticky top-0 z-50">
         <div className="flex items-center justify-between max-w-3xl mx-auto">
@@ -136,7 +162,7 @@ export default function Header({ user }: HeaderProps) {
             ref={buttonRef}
             onClick={cycleTheme}
             disabled={isAnimating}
-            className="w-11 h-11 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-xl shadow-md backdrop-blur-sm disabled:opacity-70"
+            className="w-11 h-11 rounded-full bg-white/20 border border-white/30 flex items-center justify-center text-xl shadow-md backdrop-blur-sm active:scale-90 transition-transform duration-100 disabled:opacity-70"
             aria-label="Переключить тему"
           >
             <span className="select-none">{themeIcon}</span>

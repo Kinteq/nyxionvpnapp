@@ -1,12 +1,13 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 
 export default function Navigation() {
   const pathname = usePathname();
   const router = useRouter();
   const navigatingRef = useRef(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const navItems = [
     { href: '/', icon: '🏠', label: 'Главная' },
@@ -15,18 +16,39 @@ export default function Navigation() {
     { href: '/profile', icon: '👤', label: 'Профиль' },
   ];
 
-  const handleNavClick = useCallback((href: string) => {
-    // Предотвращаем двойные клики
-    if (navigatingRef.current || pathname === href) return;
+  // Синхронизируем activeIndex с pathname
+  useEffect(() => {
+    const idx = navItems.findIndex(item => item.href === pathname);
+    setActiveIndex(idx);
+    navigatingRef.current = false;
+  }, [pathname]);
+
+  const handleNavigation = useCallback((href: string, index: number) => {
+    // Предотвращаем повторные клики
+    if (navigatingRef.current) return;
+    if (pathname === href) return;
     
     navigatingRef.current = true;
-    router.push(href);
     
-    // Сбрасываем флаг через небольшую задержку
+    // Мгновенно показываем новый активный элемент для визуального отклика
+    setActiveIndex(index);
+    
+    // Используем setTimeout(0) чтобы дать UI обновиться перед навигацией
+    setTimeout(() => {
+      router.push(href);
+    }, 0);
+    
+    // Таймаут на случай если навигация не произошла
     setTimeout(() => {
       navigatingRef.current = false;
-    }, 300);
+    }, 1000);
   }, [pathname, router]);
+
+  // Обработчик pointer events - срабатывает быстрее чем click
+  const handlePointerDown = useCallback((e: React.PointerEvent, href: string, index: number) => {
+    e.preventDefault();
+    handleNavigation(href, index);
+  }, [handleNavigation]);
 
   return (
     <nav 
@@ -34,28 +56,34 @@ export default function Navigation() {
       style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
     >
       <div className="flex justify-around items-center max-w-xl mx-auto">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+        {navItems.map((item, index) => {
+          const isActive = activeIndex === index;
           return (
             <button
               key={item.href}
               type="button"
-              onClick={() => handleNavClick(item.href)}
-              className={`nav-btn relative flex flex-col items-center gap-1 px-5 py-2 rounded-2xl ${
+              onPointerDown={(e) => handlePointerDown(e, item.href, index)}
+              className={`nav-btn relative flex flex-col items-center gap-1 px-5 py-2 rounded-2xl transition-all duration-150 ${
                 isActive 
-                  ? 'nav-btn-active bg-gradient-to-br from-coral/20 to-peach/20' 
-                  : ''
+                  ? 'scale-105' 
+                  : 'active:scale-90'
               }`}
+              style={{ touchAction: 'manipulation' }}
             >
-              {isActive && (
-                <div className="absolute inset-0 bg-gradient-to-br from-coral/15 to-peach/15 rounded-2xl border border-coral/30" />
-              )}
+              {/* Активный фон */}
+              <div 
+                className={`absolute inset-0 rounded-2xl transition-all duration-200 ${
+                  isActive 
+                    ? 'bg-gradient-to-br from-coral/20 to-peach/20 border border-coral/30 opacity-100' 
+                    : 'opacity-0'
+                }`}
+              />
               
               <span className={`text-2xl relative z-10 transition-transform duration-150 ${isActive ? 'scale-110' : ''}`}>
                 {item.icon}
               </span>
               <span
-                className={`text-xs font-semibold relative z-10 ${
+                className={`text-xs font-semibold relative z-10 transition-colors duration-150 ${
                   isActive 
                     ? 'bg-gradient-to-r from-coral to-peach bg-clip-text text-transparent' 
                     : 'text-gray-500 dark:text-gray-400'

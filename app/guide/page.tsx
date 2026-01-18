@@ -25,17 +25,17 @@ export default function GuidePage() {
   return (
     <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6">
-        <h1 className="text-2xl font-bold mb-2 gradient-text">
+        <h1 className="text-2xl font-bold mb-2 gradient-text animate-fade-in">
           📘 Инструкция по подключению
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 animate-fade-in">
           Пошаговое руководство для быстрого подключения
         </p>
 
         {/* Steps */}
         <div className="space-y-3 mb-6">
           {steps.map((step, idx) => (
-            <div key={idx} className="card">
+            <div key={idx} className={`card card-animated stagger-${idx + 1}`}>
               <div className="flex items-start gap-3">
                 <div className="text-3xl">{step.icon}</div>
                 <div className="flex-1">
@@ -48,14 +48,14 @@ export default function GuidePage() {
         </div>
 
         {/* Platform Selection */}
-        <div className="card mb-6">
+        <div className="card mb-6 card-animated stagger-5">
           <h3 className="font-semibold mb-3">📲 Скачать Hiddify</h3>
           <div className="grid grid-cols-2 gap-2">
             {platforms.map((p) => (
               <button
                 key={p.id}
                 onClick={() => setSelectedPlatform(selectedPlatform === p.id ? null : p.id as any)}
-                className={`p-3 rounded-xl border-2 text-left active:scale-[0.97] transition-transform ${
+                className={`p-3 rounded-xl border-2 text-left active:scale-[0.97] transition-all duration-200 ${
                   selectedPlatform === p.id
                     ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20'
                     : 'border-gray-200 dark:border-borderDark'
@@ -69,7 +69,7 @@ export default function GuidePage() {
           </div>
 
           {selectedPlatform === 'ios' && (
-            <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl">
+            <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl animate-scale-in">
               <h4 className="font-bold text-yellow-500 mb-2">⚠️ Для iOS пользователей из РФ</h4>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
                 Приложение Hiddify недоступно в российском App Store. Необходимо сменить регион Apple ID.
@@ -79,7 +79,7 @@ export default function GuidePage() {
                   href="https://support.apple.com/ru-ru/108996"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block p-3 bg-blue-500/10 rounded-xl text-blue-500 text-sm active:scale-[0.98] transition-transform"
+                  className="block p-3 bg-blue-500/10 rounded-xl text-blue-500 text-sm active:scale-[0.98] transition-all duration-200"
                 >
                   📖 Инструкция Apple по смене региона
                 </a>
@@ -87,7 +87,7 @@ export default function GuidePage() {
                   href="https://apps.apple.com/app/hiddify-proxy-vpn/id6596777532"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block p-3 bg-gradient-to-r from-coral/20 to-peach/20 rounded-xl text-coral font-semibold text-center active:scale-[0.98] transition-transform"
+                  className="block p-3 bg-gradient-to-r from-coral/20 to-peach/20 rounded-xl text-coral font-semibold text-center active:scale-[0.98] transition-all duration-200"
                 >
                   📥 Скачать Hiddify из App Store
                 </a>
@@ -96,12 +96,12 @@ export default function GuidePage() {
           )}
 
           {selectedPlatform === 'android' && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 animate-scale-in">
               <a
                 href="https://play.google.com/store/apps/details?id=app.hiddify.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-green-500/20 rounded-xl text-green-600 dark:text-green-400 font-semibold text-center active:scale-[0.98] transition-transform"
+                className="block p-3 bg-green-500/20 rounded-xl text-green-600 dark:text-green-400 font-semibold text-center active:scale-[0.98] transition-all duration-200"
               >
                 📥 Google Play
               </a>
@@ -109,7 +109,7 @@ export default function GuidePage() {
                 href="https://github.com/hiddify/hiddify-app/releases/latest"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-gray-500/20 rounded-xl font-semibold text-center active:scale-[0.98] transition-transform"
+                className="block p-3 bg-gray-500/20 rounded-xl font-semibold text-center active:scale-[0.98] transition-all duration-200"
               >
                 📦 Скачать APK (GitHub)
               </a>
@@ -117,12 +117,12 @@ export default function GuidePage() {
           )}
 
           {selectedPlatform === 'windows' && (
-            <div className="mt-4">
+            <div className="mt-4 animate-scale-in">
               <a
                 href="https://github.com/hiddify/hiddify-app/releases/latest"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-blue-500/20 rounded-xl text-blue-500 font-semibold text-center active:scale-[0.98] transition-transform"
+                className="block p-3 bg-blue-500/20 rounded-xl text-blue-500 font-semibold text-center active:scale-[0.98] transition-all duration-200"
               >
                 📥 Скачать для Windows (GitHub)
               </a>
@@ -130,12 +130,12 @@ export default function GuidePage() {
           )}
 
           {selectedPlatform === 'macos' && (
-            <div className="mt-4 space-y-2">
+            <div className="mt-4 space-y-2 animate-scale-in">
               <a
                 href="https://apps.apple.com/app/hiddify-proxy-vpn/id6596777532"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-gradient-to-r from-coral/20 to-peach/20 rounded-xl text-coral font-semibold text-center active:scale-[0.98] transition-transform"
+                className="block p-3 bg-gradient-to-r from-coral/20 to-peach/20 rounded-xl text-coral font-semibold text-center active:scale-[0.98] transition-all duration-200"
               >
                 📥 Mac App Store
               </a>
@@ -143,7 +143,7 @@ export default function GuidePage() {
                 href="https://github.com/hiddify/hiddify-app/releases/latest"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-3 bg-gray-500/20 rounded-xl font-semibold text-center active:scale-[0.98] transition-transform"
+                className="block p-3 bg-gray-500/20 rounded-xl font-semibold text-center active:scale-[0.98] transition-all duration-200"
               >
                 📦 Скачать DMG (GitHub)
               </a>
@@ -175,7 +175,7 @@ export default function GuidePage() {
           <h3 className="font-semibold mb-3">🔗 Быстрые ссылки</h3>
           <div className="space-y-2">
             <Link href="/keys">
-              <div className="p-3 bg-coral/10 rounded-xl border border-coral/20 active:scale-[0.98] transition-transform">
+              <div className="p-3 bg-coral/10 rounded-xl border border-coral/20 active:scale-[0.98] transition-all duration-200">
                 <div className="font-semibold">🔑 Мои ключи</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">Скопировать конфиг для подключения</div>
               </div>
@@ -184,7 +184,7 @@ export default function GuidePage() {
               href="https://t.me/nyxion_support" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="block p-3 bg-green-500/10 rounded-xl border border-green-500/20 active:scale-[0.98] transition-transform"
+              className="block p-3 bg-green-500/10 rounded-xl border border-green-500/20 active:scale-[0.98] transition-all duration-200"
             >
               <div className="font-semibold">💬 Поддержка</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">Написать в Telegram</div>
