@@ -131,7 +131,7 @@ export default function ProfilePage() {
                 onClick={() => setShowTerms(false)}
               >
                 <div
-                  className="bg-white dark:bg-surfaceDark w-full max-h-[85vh] rounded-t-3xl flex flex-col animate-fade-in-up"
+                  className="bg-white dark:bg-surfaceDark w-full max-h-[70vh] rounded-t-3xl flex flex-col animate-fade-in-up mb-20"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex-shrink-0 bg-white dark:bg-surfaceDark border-b border-gray-200 dark:border-borderDark p-4 flex justify-between items-center rounded-t-3xl">

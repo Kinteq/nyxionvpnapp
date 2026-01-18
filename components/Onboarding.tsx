@@ -114,7 +114,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       </div>
 
       {/* Button */}
-      <div className="px-8 pb-12">
+      <div className="px-8 pb-28">
         <button
           onClick={handleNext}
           className="w-full bg-white text-coral font-bold py-4 rounded-2xl text-lg shadow-lg active:scale-[0.98] transition-all duration-200"
