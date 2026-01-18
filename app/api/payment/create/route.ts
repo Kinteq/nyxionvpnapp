@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 
-const YOOKASSA_SHOP_ID = '1251616';
-const YOOKASSA_SECRET_KEY = 'test_YtBqR9quaZDLY717EpjljCeaXuRXWpTZh2t6CqkJEbs';
+const YOOKASSA_SHOP_ID = '1250587';
+const YOOKASSA_SECRET_KEY = 'live_4Z63p9sIeFaNNMY2t0VURXYcdIpUoBYb_dE8-uhhaaM';
 const YOOKASSA_API_URL = 'https://api.yookassa.ru/v3/payments';
 
 // Названия тарифов
