@@ -183,7 +183,7 @@ export default function ProfilePage() {
                       <h3 className="font-bold text-base mb-2">8. Контакты</h3>
                       <p className="text-gray-600 dark:text-gray-300">Поддержка: <a href="https://t.me/nyxion_support" className="text-blue-500 underline">@nyxion_support</a></p>
                     </section>
-                    <p className="text-xs text-gray-500 pt-4 border-t border-gray-200 dark:border-borderDark">Последнее обновление: январь 2026</p>
+                    <p className="text-xs text-gray-500 pt-4 pb-20 border-t border-gray-200 dark:border-borderDark">Последнее обновление: январь 2026</p>
                   </div>
                 </div>
               </div>

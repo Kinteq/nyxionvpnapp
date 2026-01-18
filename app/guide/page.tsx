@@ -72,16 +72,24 @@ export default function GuidePage() {
             <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-xl animate-scale-in">
               <h4 className="font-bold text-yellow-500 mb-2">⚠️ Для iOS пользователей из РФ</h4>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                Приложение Hiddify недоступно в российском App Store. Необходимо сменить регион Apple ID.
+                Приложение Hiddify недоступно в российском App Store. Вы можете сменить регион Apple ID или использовать Streisand.
               </p>
               <div className="space-y-2">
+                <a
+                  href="https://apps.apple.com/us/app/streisand/id6450534064"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block p-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl text-purple-500 font-semibold text-center active:scale-[0.98] transition-all duration-200"
+                >
+                  ⭐ Streisand (доступен в РФ App Store)
+                </a>
                 <a
                   href="https://support.apple.com/ru-ru/108996"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block p-3 bg-blue-500/10 rounded-xl text-blue-500 text-sm active:scale-[0.98] transition-all duration-200"
                 >
-                  📖 Инструкция Apple по смене региона
+                  📖 Инструкция по смене региона (для Hiddify)
                 </a>
                 <a
                   href="https://apps.apple.com/app/hiddify-proxy-vpn/id6596777532"

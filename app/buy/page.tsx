@@ -53,7 +53,7 @@ const PLANS: Plan[] = [
 export default function BuyPage() {
   const [selectedType, setSelectedType] = useState<PlanType>('premium');
   const [selectedDuration, setSelectedDuration] = useState<Duration>('3m');
-  const [selectedMethod, setSelectedMethod] = useState<'cryptobot' | 'yukassa'>('cryptobot');
+  const [selectedMethod, setSelectedMethod] = useState<'cryptobot' | 'yukassa'>('yukassa');
   const [selectedAsset, setSelectedAsset] = useState<'USDT' | 'TON' | 'BTC'>('USDT');
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
@@ -316,7 +316,7 @@ export default function BuyPage() {
           }
         </button>
 
-        <div className="text-center mt-4">
+        <div className="text-center mt-4 space-y-2"><p className="text-sm text-coral font-medium">⚠️ После оплаты вернитесь в бота для получения ключа</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Вопросы?{' '}
             <a href="https://t.me/nyxion_support" target="_blank" rel="noopener noreferrer" className="text-coral hover:underline">
