@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SubscriptionCard from '@/components/SubscriptionCard';
+import Onboarding from '@/components/Onboarding';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +29,15 @@ export default function Home() {
   const [promoCode, setPromoCode] = useState('');
   const [promoStatus, setPromoStatus] = useState<PromoResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // Проверяем, показывали ли onboarding
+    const onboardingComplete = localStorage.getItem('nyxion_onboarding_complete');
+    if (!onboardingComplete) {
+      setShowOnboarding(true);
+    }
+
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
       tg.ready();
@@ -104,7 +112,12 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
+    <>
+      {showOnboarding && (
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
+      )}
+      
+      <main className="min-h-screen pb-28 bg-background dark:bg-surfaceDark">
       <div className="px-4 py-6 space-y-6">
         {/* Welcome Section */}
         <div className="text-center animate-fade-in">
@@ -193,5 +206,6 @@ export default function Home() {
         )}
       </div>
     </main>
+    </>
   );
 }
