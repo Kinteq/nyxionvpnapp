@@ -22,6 +22,15 @@ interface Plan {
   discount: number | null;
 }
 
+interface Subscription {
+  isActive: boolean;
+  planType?: PlanType;
+  daysLeft?: number;
+  expiryDate?: string;
+}
+
+const TARIFF_PRIORITY: Record<PlanType, number> = { personal: 1, premium: 2, family: 3 };
+
 const PLAN_TYPES: { id: PlanType; name: string; icon: string; desc: string; color: string }[] = [
   { id: 'personal', name: 'Личный', icon: '👤', desc: '100 ГБ/мес', color: 'from-blue-500 to-cyan-500' },
   { id: 'premium', name: 'Премиум', icon: '⭐', desc: 'Безлимит', color: 'from-coral to-peach' },
@@ -57,15 +66,60 @@ export default function BuyPage() {
   const [selectedAsset, setSelectedAsset] = useState<'USDT' | 'TON' | 'BTC'>('USDT');
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [showUpgradeWarning, setShowUpgradeWarning] = useState(false);
 
+  // Загружаем данные о текущей подписке
   useEffect(() => {
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      setUserId(window.Telegram.WebApp.initDataUnsafe.user.id);
-    }
+    const loadSubscription = async () => {
+      const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      if (tgUserId) {
+        setUserId(tgUserId);
+        try {
+          const res = await fetch(`/api/subscription?userId=${tgUserId}`);
+          const data = await res.json();
+          if (data.isActive) {
+            setSubscription({
+              isActive: true,
+              planType: data.planType as PlanType,
+              daysLeft: data.daysLeft,
+              expiryDate: data.expiryDate,
+            });
+            // Устанавливаем выбранный тариф на текущий
+            if (data.planType) {
+              setSelectedType(data.planType);
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load subscription:', e);
+        }
+      }
+    };
+    loadSubscription();
   }, []);
 
   const selectedPlan = PLANS.find(p => p.type === selectedType && p.duration === selectedDuration)!;
   const typeInfo = PLAN_TYPES.find(t => t.id === selectedType)!;
+
+  // Проверяем можно ли выбрать тариф
+  const canSelectTariff = (tariffType: PlanType): boolean => {
+    if (!subscription?.isActive || !subscription.planType) return true;
+    const currentPriority = TARIFF_PRIORITY[subscription.planType];
+    const newPriority = TARIFF_PRIORITY[tariffType];
+    return newPriority >= currentPriority; // Можно выбрать только такой же или выше
+  };
+
+  // Проверяем это апгрейд или продление
+  const isUpgrade = (): boolean => {
+    if (!subscription?.isActive || !subscription.planType) return false;
+    return TARIFF_PRIORITY[selectedType] > TARIFF_PRIORITY[subscription.planType];
+  };
+
+  // Проверяем это продление того же тарифа
+  const isRenewal = (): boolean => {
+    if (!subscription?.isActive || !subscription.planType) return false;
+    return selectedType === subscription.planType;
+  };
 
   const getCryptoPrice = () => {
     switch (selectedAsset) {
@@ -76,12 +130,39 @@ export default function BuyPage() {
     }
   };
 
+  const handleSelectType = (type: PlanType) => {
+    if (!canSelectTariff(type)) {
+      alert(`⚠️ Даунгрейд запрещён.\n\nВаш текущий тариф: ${PLAN_TYPES.find(t => t.id === subscription?.planType)?.name}\n\nВы можете продлить текущий тариф или повысить до более высокого.`);
+      return;
+    }
+    setSelectedType(type);
+    
+    // Показываем предупреждение об апгрейде
+    if (subscription?.isActive && subscription.planType && TARIFF_PRIORITY[type] > TARIFF_PRIORITY[subscription.planType]) {
+      setShowUpgradeWarning(true);
+    } else {
+      setShowUpgradeWarning(false);
+    }
+  };
+
   const handlePurchase = async () => {
     if (!userId) { alert('Откройте приложение через Telegram'); return; }
+    
+    // Предупреждение об апгрейде
+    if (isUpgrade()) {
+      const confirmed = confirm(
+        `⚠️ ВНИМАНИЕ: Апгрейд тарифа\n\n` +
+        `При переходе на тариф "${typeInfo.name}" ваши текущие дни подписки (${subscription?.daysLeft} дней) будут СБРОШЕНЫ.\n\n` +
+        `Вы получите ${selectedPlan.days} дней нового тарифа.\n\n` +
+        `Чтобы ДОБАВИТЬ дни без потерь — выберите ваш текущий тариф.\n\n` +
+        `Продолжить апгрейд?`
+      );
+      if (!confirmed) return;
+    }
+    
     setLoading(true);
     try {
       if (selectedMethod === 'yukassa') {
-        // Оплата через ЮКассу
         const tariffId = `${selectedType}_${selectedDuration === '12m' ? 'year' : 'month'}`;
         const response = await fetch('/api/payment/create', {
           method: 'POST',
@@ -98,9 +179,7 @@ export default function BuyPage() {
         });
         const data = await response.json();
         if (data.confirmationUrl) {
-          // Открываем страницу оплаты ЮКассы во встроенном браузере Telegram
           if (window.Telegram?.WebApp) {
-            // openLink открывает ссылку во внешнем браузере
             (window.Telegram.WebApp as any).openLink(data.confirmationUrl, { try_instant_view: false });
           } else {
             window.location.href = data.confirmationUrl;
@@ -109,7 +188,6 @@ export default function BuyPage() {
           alert('Ошибка: ' + (data.error || 'не удалось создать платёж'));
         }
       } else {
-        // Оплата через CryptoBot
         const amount = getCryptoPrice();
         const response = await fetch('/api/create-invoice', {
           method: 'POST',
@@ -156,34 +234,80 @@ export default function BuyPage() {
           💎 Выберите тариф
         </h1>
         
+        {/* Текущая подписка */}
+        {subscription?.isActive && (
+          <div className="card mb-4 border-2 border-coral/50 bg-coral/10">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{PLAN_TYPES.find(t => t.id === subscription.planType)?.icon || '💎'}</span>
+              <div>
+                <div className="font-bold">Текущий тариф: {PLAN_TYPES.find(t => t.id === subscription.planType)?.name}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Осталось {subscription.daysLeft} дней (до {subscription.expiryDate})
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Предупреждение об апгрейде */}
+        {showUpgradeWarning && (
+          <div className="card mb-4 border-2 border-yellow-500/50 bg-yellow-500/10">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <div className="font-bold text-yellow-600 dark:text-yellow-400">Апгрейд тарифа</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  При переходе на более высокий тариф ваши текущие {subscription?.daysLeft} дней <b>будут сброшены</b>.
+                  Вы получите только дни нового тарифа.
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Чтобы продлить без потерь — выберите &quot;{PLAN_TYPES.find(t => t.id === subscription?.planType)?.name}&quot;
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="card mb-4 card-animated stagger-1">
           <h3 className="text-lg font-bold mb-3">Тип подписки</h3>
           <div className="space-y-2">
-            {PLAN_TYPES.map((type) => (
-              <button 
-                key={type.id} 
-                onClick={() => setSelectedType(type.id)}
-                className={`w-full p-4 rounded-xl border-2 text-left active:scale-[0.98] transition-all duration-200 ${
-                  selectedType === type.id
-                    ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20'
-                    : 'border-gray-200 dark:border-borderDark'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{type.icon}</span>
-                    <div>
-                      <div className="font-bold text-lg">{type.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{type.desc}</div>
+            {PLAN_TYPES.map((type) => {
+              const canSelect = canSelectTariff(type.id);
+              const isCurrent = subscription?.isActive && subscription.planType === type.id;
+              
+              return (
+                <button 
+                  key={type.id} 
+                  onClick={() => handleSelectType(type.id)}
+                  disabled={!canSelect}
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all duration-200 ${
+                    !canSelect
+                      ? 'border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800'
+                      : selectedType === type.id
+                      ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20'
+                      : 'border-gray-200 dark:border-borderDark active:scale-[0.98]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{type.icon}</span>
+                      <div>
+                        <div className="font-bold text-lg flex items-center gap-2">
+                          {type.name}
+                          {isCurrent && <span className="text-xs bg-coral/20 text-coral px-2 py-0.5 rounded-full">Текущий</span>}
+                          {!canSelect && <span className="text-xs bg-gray-300 dark:bg-gray-600 px-2 py-0.5 rounded-full">🔒</span>}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">{type.desc}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">от {getBasePrice(type.id)}₽</div>
+                      {selectedType === type.id && canSelect && <span className="text-coral text-xl">✓</span>}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold text-lg">от {getBasePrice(type.id)}₽</div>
-                    {selectedType === type.id && <span className="text-coral text-xl">✓</span>}
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -197,37 +321,34 @@ export default function BuyPage() {
             <li className="flex items-center gap-2">
               ✅ {selectedPlan.trafficGb ? `${selectedPlan.trafficGb} ГБ/мес` : 'Безлимитный трафик'}
             </li>
-            <li className="flex items-center gap-2">
-              ✅ До {selectedPlan.maxIps} IP-адресов одновременно
-            </li>
-            <li className="flex items-center gap-2">✅ Скорость до 1 Гбит/с</li>
-            <li className="flex items-center gap-2">✅ Без логов</li>
-            <li className="flex items-center gap-2">✅ Поддержка 24/7</li>
+            <li className="flex items-center gap-2">✅ До {selectedPlan.maxIps} устройств</li>
+            <li className="flex items-center gap-2">✅ Все локации</li>
+            <li className="flex items-center gap-2">✅ Hysteria2 протокол</li>
           </ul>
         </div>
 
         <div className="card mb-4 card-animated stagger-3">
-          <h3 className="text-lg font-bold mb-3">Период</h3>
+          <h3 className="text-lg font-bold mb-3">Срок</h3>
           <div className="grid grid-cols-2 gap-2">
             {DURATIONS.map((dur) => {
-              const plan = PLANS.find(p => p.type === selectedType && p.duration === dur.id)!;
+              const plan = PLANS.find(p => p.type === selectedType && p.duration === dur.id);
               return (
                 <button 
                   key={dur.id} 
                   onClick={() => setSelectedDuration(dur.id)}
-                  className={`relative p-3 rounded-xl border-2 text-left active:scale-[0.97] transition-all duration-200 ${
+                  className={`p-3 rounded-xl border-2 relative active:scale-[0.98] transition-all duration-200 ${
                     selectedDuration === dur.id
                       ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20'
                       : 'border-gray-200 dark:border-borderDark'
                   }`}
                 >
-                  {plan.discount && (
-                    <span className="absolute -top-2 -right-1 bg-green-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <div className="font-bold">{dur.name}</div>
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">{plan?.price}₽</div>
+                  {plan?.discount && (
+                    <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-bold shadow-lg">
                       -{plan.discount}%
-                    </span>
+                    </div>
                   )}
-                  <div className="font-semibold">{dur.name}</div>
-                  <div className="text-xl font-bold gradient-text">{plan.price}₽</div>
                 </button>
               );
             })}
@@ -287,7 +408,11 @@ export default function BuyPage() {
               <div className={`font-bold bg-gradient-to-r ${typeInfo.color} bg-clip-text text-transparent`}>
                 {typeInfo.icon} {typeInfo.name}
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{selectedPlan.days} дней</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedPlan.days} дней
+                {isRenewal() && <span className="text-green-500 ml-2">+ к текущим</span>}
+                {isUpgrade() && <span className="text-yellow-500 ml-2">⚠️ сброс</span>}
+              </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -306,17 +431,22 @@ export default function BuyPage() {
           className={`w-full font-bold rounded-2xl text-xl py-4 px-6 active:scale-[0.98] transition-all duration-200 ${
             !userId
               ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
+              : isUpgrade()
+              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
               : `bg-gradient-to-r ${typeInfo.color} text-white shadow-lg`
           }`}
         >
           {loading ? '⏳ Создание счёта...'
             : !userId ? '📱 Откройте через Telegram'
+            : isUpgrade() ? `⬆️ АПГРЕЙД ${selectedMethod === 'yukassa' ? selectedPlan.price + '₽' : getCryptoPrice() + ' ' + selectedAsset}`
+            : isRenewal() ? `➕ ПРОДЛИТЬ ${selectedMethod === 'yukassa' ? selectedPlan.price + '₽' : getCryptoPrice() + ' ' + selectedAsset}`
             : selectedMethod === 'yukassa' ? `💳 ОПЛАТИТЬ ${selectedPlan.price}₽`
             : `💎 ОПЛАТИТЬ ${getCryptoPrice()} ${selectedAsset}`
           }
         </button>
 
-        <div className="text-center mt-4 space-y-2"><p className="text-sm text-coral font-medium">⚠️ После оплаты вернитесь в бота для получения ключа</p>
+        <div className="text-center mt-4 space-y-2">
+          <p className="text-sm text-coral font-medium">⚠️ После оплаты вернитесь в бота для получения ключа</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             Вопросы?{' '}
             <a href="https://t.me/nyxion_support" target="_blank" rel="noopener noreferrer" className="text-coral hover:underline">
