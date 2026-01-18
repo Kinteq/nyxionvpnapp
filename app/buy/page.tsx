@@ -98,9 +98,10 @@ export default function BuyPage() {
         });
         const data = await response.json();
         if (data.confirmationUrl) {
-          // Открываем страницу оплаты ЮКассы
-          if (window.Telegram?.WebApp?.openLink) {
-            window.Telegram.WebApp.openLink(data.confirmationUrl);
+          // Открываем страницу оплаты ЮКассы во встроенном браузере Telegram
+          if (window.Telegram?.WebApp) {
+            // try_instant_view: false открывает во встроенном браузере, не во внешнем
+            window.Telegram.WebApp.openLink(data.confirmationUrl, { try_instant_view: false });
           } else {
             window.location.href = data.confirmationUrl;
           }
