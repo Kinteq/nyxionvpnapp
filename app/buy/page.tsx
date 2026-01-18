@@ -100,8 +100,8 @@ export default function BuyPage() {
         if (data.confirmationUrl) {
           // Открываем страницу оплаты ЮКассы во встроенном браузере Telegram
           if (window.Telegram?.WebApp) {
-            // try_instant_view: false открывает во встроенном браузере, не во внешнем
-            window.Telegram.WebApp.openLink(data.confirmationUrl, { try_instant_view: false });
+            // openLink открывает ссылку во внешнем браузере
+            (window.Telegram.WebApp as any).openLink(data.confirmationUrl, { try_instant_view: false });
           } else {
             window.location.href = data.confirmationUrl;
           }
