@@ -167,7 +167,7 @@ export default function Home() {
           {[
             { icon: '⚡️', title: 'Высокая скорость', desc: 'До 1 Гбит/с' },
             { icon: '🔒', title: 'Безопасность', desc: 'Шифрование AES-256' },
-            { icon: '🌍', title: 'Без ограничений', desc: 'Безлимитный трафик' },
+            { icon: '🌍', title: 'Без ограничений', desc: 'Доступ ко всем сайтам' },
             { icon: '⏱', title: '24/7 Доступ', desc: 'Всегда на связи' },
           ].map((feature, i) => (
             <div key={i} className={`card text-center card-animated stagger-${i + 2}`}>
@@ -182,7 +182,7 @@ export default function Home() {
         {!subscription?.isActive && (
           <div className="card bg-nyxion-gradient text-white text-center overflow-hidden card-animated stagger-5">
             <h2 className="text-2xl font-bold mb-2">Начните прямо сейчас!</h2>
-            <p className="mb-4 opacity-90">30 дней безлимитного VPN всего за 150₽</p>
+            <p className="mb-4 opacity-90">30 дней быстрого VPN всего за 149₽</p>
             <button 
               onClick={() => router.push('/buy')}
               className="w-full py-3 bg-white/90 text-navy font-bold rounded-xl shadow-lg backdrop-blur-sm active:scale-[0.98] transition-transform"
