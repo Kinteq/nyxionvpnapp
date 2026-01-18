@@ -80,31 +80,61 @@ export default function BuyPage() {
     if (!userId) { alert('Откройте приложение через Telegram'); return; }
     setLoading(true);
     try {
-      const amount = getCryptoPrice();
-      const response = await fetch('/api/create-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId, 
-          method: selectedMethod, 
-          asset: selectedAsset, 
-          amount,
-          plan: selectedPlan.id,
-          planType: selectedPlan.type,
-          days: selectedPlan.days,
-          trafficGb: selectedPlan.trafficGb,
-          maxIps: selectedPlan.maxIps,
-        }),
-      });
-      const data = await response.json();
-      if (data.success && data.invoiceUrl) {
-        if (window.Telegram?.WebApp?.openLink) {
-          window.Telegram.WebApp.openLink(data.invoiceUrl);
-        } else { 
-          window.location.href = data.invoiceUrl; 
+      if (selectedMethod === 'yukassa') {
+        // Оплата через ЮКассу
+        const tariffId = `${selectedType}_${selectedDuration === '12m' ? 'year' : 'month'}`;
+        const response = await fetch('/api/payment/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            tariffId,
+            planType: selectedType,
+            days: selectedPlan.days,
+            price: selectedPlan.price,
+            trafficGb: selectedPlan.trafficGb,
+            maxIps: selectedPlan.maxIps,
+          }),
+        });
+        const data = await response.json();
+        if (data.confirmationUrl) {
+          // Открываем страницу оплаты ЮКассы
+          if (window.Telegram?.WebApp?.openLink) {
+            window.Telegram.WebApp.openLink(data.confirmationUrl);
+          } else {
+            window.location.href = data.confirmationUrl;
+          }
+        } else {
+          alert('Ошибка: ' + (data.error || 'не удалось создать платёж'));
         }
-      } else { 
-        alert('Ошибка: ' + (data.error || 'неизвестная ошибка')); 
+      } else {
+        // Оплата через CryptoBot
+        const amount = getCryptoPrice();
+        const response = await fetch('/api/create-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId, 
+            method: selectedMethod, 
+            asset: selectedAsset, 
+            amount,
+            plan: selectedPlan.id,
+            planType: selectedPlan.type,
+            days: selectedPlan.days,
+            trafficGb: selectedPlan.trafficGb,
+            maxIps: selectedPlan.maxIps,
+          }),
+        });
+        const data = await response.json();
+        if (data.success && data.invoiceUrl) {
+          if (window.Telegram?.WebApp?.openLink) {
+            window.Telegram.WebApp.openLink(data.invoiceUrl);
+          } else { 
+            window.location.href = data.invoiceUrl; 
+          }
+        } else { 
+          alert('Ошибка: ' + (data.error || 'неизвестная ошибка')); 
+        }
       }
     } catch (error) { 
       alert('Ошибка при создании счёта: ' + error); 
@@ -208,13 +238,13 @@ export default function BuyPage() {
           <div className="grid grid-cols-2 gap-2">
             <button 
               onClick={() => setSelectedMethod('yukassa')}
-              className={`p-3 rounded-xl border-2 opacity-50 ${
-                selectedMethod === 'yukassa' ? 'border-coral bg-coral/10' : 'border-gray-200 dark:border-borderDark'
+              className={`p-3 rounded-xl border-2 active:scale-[0.98] transition-transform ${
+                selectedMethod === 'yukassa' ? 'border-coral bg-coral/10 shadow-lg shadow-coral/20' : 'border-gray-200 dark:border-borderDark'
               }`}
             >
               <div className="text-xl mb-1">💳</div>
               <div className="font-semibold text-sm">Карта</div>
-              <div className="text-xs text-gray-500">скоро</div>
+              <div className="text-xs text-gray-500">Visa, MasterCard, Мир</div>
             </button>
             
             <button 
@@ -271,17 +301,17 @@ export default function BuyPage() {
 
         <button 
           onClick={handlePurchase}
-          disabled={loading || selectedMethod === 'yukassa' || !userId}
+          disabled={loading || !userId}
           className={`w-full font-bold rounded-2xl text-xl py-4 px-6 active:scale-[0.98] transition-all duration-200 ${
-            selectedMethod === 'yukassa' || !userId
+            !userId
               ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
               : `bg-gradient-to-r ${typeInfo.color} text-white shadow-lg`
           }`}
         >
           {loading ? '⏳ Создание счёта...'
             : !userId ? '📱 Откройте через Telegram'
-            : selectedMethod === 'yukassa' ? '💳 Скоро'
-            : '💎 ОПЛАТИТЬ'
+            : selectedMethod === 'yukassa' ? `💳 ОПЛАТИТЬ ${selectedPlan.price}₽`
+            : `💎 ОПЛАТИТЬ ${getCryptoPrice()} ${selectedAsset}`
           }
         </button>
 

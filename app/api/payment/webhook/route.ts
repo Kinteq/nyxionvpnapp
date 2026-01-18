@@ -14,9 +14,11 @@ interface YooKassaNotification {
     };
     metadata?: {
       userId?: string;
-      tariffId?: string;
-      days?: number;
       tariffType?: string;
+      days?: number | string;
+      trafficLimit?: number | string;
+      deviceLimit?: number | string;
+      price?: number | string;
     };
     paid: boolean;
   };
@@ -41,29 +43,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: 'ok' });
     }
 
-    const { userId, tariffId, days, tariffType } = payment.metadata || {};
+    const metadata = payment.metadata || {};
+    const userId = metadata.userId;
+    const tariffType = metadata.tariffType || 'premium';
+    const days = Number(metadata.days) || 30;
+    const trafficLimit = Number(metadata.trafficLimit) || 0;
+    const deviceLimit = Number(metadata.deviceLimit) || 2;
 
-    if (!userId || !days) {
-      console.error('Missing metadata in payment:', payment.id);
+    if (!userId) {
+      console.error('Missing userId in payment metadata:', payment.id);
       return NextResponse.json({ status: 'ok' });
     }
 
     console.log(`Activating subscription for user ${userId}: ${tariffType} for ${days} days`);
-
-    // Определяем лимиты по тарифу
-    let trafficLimit = 0; // 0 = безлимит
-    let deviceLimit = 2;
-
-    if (tariffType === 'personal') {
-      trafficLimit = 107374182400; // 100 GB в байтах
-      deviceLimit = 2;
-    } else if (tariffType === 'premium') {
-      trafficLimit = 0; // безлимит
-      deviceLimit = 2;
-    } else if (tariffType === 'family') {
-      trafficLimit = 0; // безлимит
-      deviceLimit = 5;
-    }
 
     // Активируем подписку через backend API
     const activateResponse = await fetch(`${BACKEND_API_URL}/api/activate`, {
@@ -74,7 +66,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         userId: parseInt(userId),
         days: days,
-        tariff: tariffType || 'premium',
+        tariff: tariffType,
         trafficLimit: trafficLimit,
         deviceLimit: deviceLimit,
         paymentId: payment.id,

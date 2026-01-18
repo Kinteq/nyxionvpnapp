@@ -5,32 +5,21 @@ const YOOKASSA_SHOP_ID = '1251616';
 const YOOKASSA_SECRET_KEY = 'test_YtBqR9quaZDLY717EpjljCeaXuRXWpTZh2t6CqkJEbs';
 const YOOKASSA_API_URL = 'https://api.yookassa.ru/v3/payments';
 
-// Тарифы с ценами
-const TARIFFS: Record<string, { name: string; price: number; days: number }> = {
-  personal_month: { name: 'Личный (1 месяц)', price: 99, days: 30 },
-  personal_year: { name: 'Личный (1 год)', price: 999, days: 365 },
-  premium_month: { name: 'Премиум (1 месяц)', price: 149, days: 30 },
-  premium_year: { name: 'Премиум (1 год)', price: 1490, days: 365 },
-  family_month: { name: 'Семейный (1 месяц)', price: 249, days: 30 },
-  family_year: { name: 'Семейный (1 год)', price: 2490, days: 365 },
+// Названия тарифов
+const TARIFF_NAMES: Record<string, string> = {
+  personal: 'Личный',
+  premium: 'Премиум',
+  family: 'Семейный',
 };
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, tariffId } = body;
+    const { userId, planType, days, price, trafficGb, maxIps } = body;
 
-    if (!userId || !tariffId) {
+    if (!userId || !planType || !days || !price) {
       return NextResponse.json(
-        { error: 'userId and tariffId are required' },
-        { status: 400 }
-      );
-    }
-
-    const tariff = TARIFFS[tariffId];
-    if (!tariff) {
-      return NextResponse.json(
-        { error: 'Invalid tariff' },
+        { error: 'userId, planType, days and price are required' },
         { status: 400 }
       );
     }
@@ -38,10 +27,17 @@ export async function POST(request: NextRequest) {
     // Ключ идемпотентности
     const idempotenceKey = uuidv4();
 
+    // Определяем период
+    const periodName = days >= 365 ? '1 год' : days >= 180 ? '6 месяцев' : days >= 90 ? '3 месяца' : '1 месяц';
+    const tariffName = TARIFF_NAMES[planType] || planType;
+    
+    // Лимит трафика в байтах (trafficGb = null означает безлимит)
+    const trafficLimitBytes = trafficGb ? trafficGb * 1024 * 1024 * 1024 : 0;
+
     // Формируем запрос к ЮKassa
     const paymentData = {
       amount: {
-        value: tariff.price.toFixed(2),
+        value: Number(price).toFixed(2),
         currency: 'RUB',
       },
       capture: true, // Автоматическое подтверждение платежа
@@ -49,12 +45,14 @@ export async function POST(request: NextRequest) {
         type: 'redirect',
         return_url: `https://nyxionvpnapp.vercel.app/payment/success?userId=${userId}`,
       },
-      description: `Nyxion VPN: ${tariff.name}`,
+      description: `Nyxion VPN: ${tariffName} (${periodName})`,
       metadata: {
         userId: String(userId),
-        tariffId: tariffId,
-        days: tariff.days,
-        tariffType: tariffId.split('_')[0], // personal, premium, family
+        tariffType: planType,
+        days: days,
+        trafficLimit: trafficLimitBytes,
+        deviceLimit: maxIps || 2,
+        price: price,
       },
     };
 
