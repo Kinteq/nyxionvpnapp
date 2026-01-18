@@ -11,18 +11,17 @@ interface UserProfile {
   lastName?: string;
 }
 
-interface Device {
-  device_id: string;
-  ip: string;
-  first_seen: string;
-  last_seen: string;
+interface SubscriptionData {
+  isActive: boolean;
+  onlineCount?: number;
+  status?: string;
+  daysLeft?: number;
 }
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [devices, setDevices] = useState<Device[]>([]);
-  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
@@ -31,44 +30,19 @@ export default function ProfilePage() {
       setProfile(user || {});
       
       if (user?.id) {
-        loadDevices(user.id);
+        loadSubscription(user.id);
       }
     }
     setLoading(false);
   }, []);
 
-  const loadDevices = async (userId: number) => {
-    setLoadingDevices(true);
+  const loadSubscription = async (userId: number) => {
     try {
-      const res = await fetch(`/api/devices?userId=${userId}`);
+      const res = await fetch(`/api/subscription?userId=${userId}`);
       const data = await res.json();
-      setDevices(data.devices || []);
+      setSubscription(data);
     } catch (error) {
-      console.error('Error loading devices:', error);
-    } finally {
-      setLoadingDevices(false);
-    }
-  };
-
-  const handleRemoveDevice = async (deviceId: string) => {
-    if (!profile?.id || !confirm('Удалить это устройство?')) return;
-
-    try {
-      const res = await fetch('/api/devices', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: profile.id, deviceId }),
-      });
-
-      const data = await res.json();
-      if (data.success) {
-        loadDevices(profile.id);
-        alert('Устройство удалено');
-      } else {
-        alert('Ошибка: ' + data.error);
-      }
-    } catch (error) {
-      alert('Ошибка сети');
+      console.error('Error loading subscription:', error);
     }
   };
 
@@ -108,44 +82,32 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Управление устройствами */}
+            {/* Статус подключения */}
             <div className="card card-animated stagger-2">
-              <h2 className="font-semibold mb-3">📱 Мои устройства</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-                Подключенные устройства (макс. 2):
-              </p>
-              {loadingDevices ? (
-                <div className="text-center py-4 text-gray-500">Загрузка...</div>
-              ) : devices.length > 0 ? (
-                <div className="space-y-2">
-                  {devices.map((device, idx) => (
-                    <div 
-                      key={idx} 
-                      className="p-3 bg-gray-50 dark:bg-cardDark border border-gray-200 dark:border-borderDark rounded-xl"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <p className="text-xs font-mono text-gray-600 dark:text-gray-300 break-all">
-                            {device.device_id.slice(0, 20)}...
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">IP: {device.ip}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Последний вход: {new Date(device.last_seen).toLocaleString('ru')}
-                          </p>
-                        </div>
-                        <button 
-                          onClick={() => handleRemoveDevice(device.device_id)}
-                          className="ml-2 w-8 h-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg flex items-center justify-center text-sm active:scale-90 transition-all duration-200"
-                        >
-                          ✕
-                        </button>
-                      </div>
+              <h2 className="font-semibold mb-3">📡 Статус подключения</h2>
+              {subscription?.isActive ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-cardDark rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-3 h-3 rounded-full ${subscription.status === 'Online' ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                      <span className="text-sm font-medium">
+                        {subscription.status === 'Online' ? 'Онлайн' : 'Оффлайн'}
+                      </span>
                     </div>
-                  ))}
+                    {subscription.onlineCount !== undefined && subscription.onlineCount > 0 && (
+                      <span className="text-xs px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full">
+                        {subscription.onlineCount} подключ.
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    💡 Одна подписка работает на 2 уникальных IP-адресах одновременно. 
+                    Устройства за одним роутером считаются как один IP.
+                  </p>
                 </div>
               ) : (
                 <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
-                  Нет подключенных устройств
+                  Нет активной подписки
                 </p>
               )}
             </div>
