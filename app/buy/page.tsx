@@ -250,14 +250,16 @@ export default function BuyPage() {
           </div>
         )}
 
-        <div className={`card mb-4 bg-gradient-to-br ${typeInfo.color} bg-opacity-10 border-2 border-coral/30`}>
+        <div className="card mb-4 bg-white dark:bg-cardDark border-2 border-coral/30 shadow-lg">
           <div className="flex justify-between items-center">
             <div>
-              <div className="font-bold">{typeInfo.icon} {typeInfo.name}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">{selectedPlan.days} дней</div>
+              <div className={`font-bold bg-gradient-to-r ${typeInfo.color} bg-clip-text text-transparent`}>
+                {typeInfo.icon} {typeInfo.name}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">{selectedPlan.days} дней</div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold gradient-text">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
                 {selectedMethod === 'cryptobot' ? `${getCryptoPrice()} ${selectedAsset}` : `${selectedPlan.price}₽`}
               </div>
               {selectedPlan.discount && (

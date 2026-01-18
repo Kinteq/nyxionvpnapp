@@ -10,9 +10,20 @@ interface SubscriptionProps {
     expiryDate?: string;
     daysLeft?: number;
     vpnUri?: string;
-    trafficGb?: number;
+    trafficGb?: number | null;
+    trafficUsedGb?: number;
+    planType?: 'personal' | 'premium' | 'family';
+    planName?: string;
+    status?: 'Online' | 'Offline';
+    onlineCount?: number;
   } | null;
 }
+
+const PLAN_INFO: Record<string, { name: string; icon: string; bgColor: string }> = {
+  personal: { name: 'Личный', icon: '👤', bgColor: 'bg-blue-500' },
+  premium: { name: 'Премиум', icon: '⭐', bgColor: 'bg-gradient-to-r from-coral to-peach' },
+  family: { name: 'Семейный', icon: '👨‍👩‍👧‍👦', bgColor: 'bg-gradient-to-r from-purple-500 to-pink-500' },
+};
 
 export default function SubscriptionCard({ subscription }: SubscriptionProps) {
   const [showKey, setShowKey] = useState(false);
@@ -27,11 +38,21 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
           Приобретите VPN для получения доступа к быстрому и безопасному интернету
         </p>
         <Link href="/buy">
-          <button className="btn-primary w-full active:scale-[0.98] transition-transform">Купить подписку</button>
+          <button className="btn-primary w-full active:scale-[0.98] transition-transform">
+            Купить подписку
+          </button>
         </Link>
       </div>
     );
   }
+
+  const planType = subscription.planType || 'premium';
+  const planInfo = PLAN_INFO[planType] || PLAN_INFO.premium;
+  const isLimited = subscription.trafficGb !== null && subscription.trafficGb !== undefined && subscription.trafficGb > 0;
+  const trafficUsed = subscription.trafficUsedGb || 0;
+  const trafficLimit = subscription.trafficGb || 0;
+  const trafficPercent = isLimited ? Math.min(100, (trafficUsed / trafficLimit) * 100) : 0;
+  const isOnline = subscription.status === 'Online';
 
   const copyToClipboard = () => {
     if (subscription.vpnUri) {
@@ -49,12 +70,10 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
 
   const parseExpiryDate = (dateStr?: string): Date | null => {
     if (!dateStr) return null;
-
     if (dateStr.includes("-") || dateStr.includes("T")) {
       const date = new Date(dateStr);
       return isNaN(date.getTime()) ? null : date;
     }
-
     const parts = dateStr.split(".");
     if (parts.length === 3) {
       const [day, month, year] = parts.map((p) => parseInt(p, 10));
@@ -62,8 +81,12 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         return new Date(year, month - 1, day);
       }
     }
-
     return null;
+  };
+
+  const formatTraffic = (gb: number) => {
+    if (gb < 1) return `${(gb * 1024).toFixed(0)} МБ`;
+    return `${gb.toFixed(1)} ГБ`;
   };
 
   const expiryDateObj = parseExpiryDate(subscription.expiryDate);
@@ -75,10 +98,18 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
     <div className="card bg-card-gradient border-2 border-peach/20">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-          <span className="font-semibold text-green-600">Активна</span>
+          <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+          <span className={`font-semibold ${isOnline ? 'text-green-600' : 'text-gray-500'}`}>
+            {isOnline ? 'Онлайн' : 'Офлайн'}
+          </span>
+          {isOnline && subscription.onlineCount && subscription.onlineCount > 0 && (
+            <span className="text-xs text-gray-500">({subscription.onlineCount} подкл.)</span>
+          )}
         </div>
-        <div className="px-3 py-1 bg-nyxion-gradient text-white text-sm font-semibold rounded-full">Premium</div>
+        <div className={`px-3 py-1 ${planInfo.bgColor} text-white text-sm font-semibold rounded-full flex items-center gap-1`}>
+          <span>{planInfo.icon}</span>
+          <span>{planInfo.name}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -86,11 +117,44 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
           <div className="text-2xl font-bold gradient-text">{subscription.daysLeft || 0}</div>
           <div className="text-sm text-textLight">дней осталось</div>
         </div>
-        
         <div className="text-center p-3 bg-white dark:bg-cardDark rounded-xl">
-          <div className="text-2xl font-bold gradient-text">∞</div>
-          <div className="text-sm text-textLight">трафик</div>
+          <div className="text-2xl font-bold gradient-text">
+            {isLimited ? `${trafficLimit}` : '∞'}
+          </div>
+          <div className="text-sm text-textLight">
+            {isLimited ? 'ГБ/мес' : 'трафик'}
+          </div>
         </div>
+      </div>
+
+      <div className="mb-4 p-3 bg-white dark:bg-cardDark rounded-xl">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm text-textLight">Использовано</span>
+          <span className="text-sm font-medium">
+            {isLimited 
+              ? `${formatTraffic(trafficUsed)} / ${formatTraffic(trafficLimit)}`
+              : formatTraffic(trafficUsed)
+            }
+          </span>
+        </div>
+        <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          {isLimited ? (
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${
+                trafficPercent > 90 ? 'bg-red-500' : trafficPercent > 70 ? 'bg-yellow-500' : 'bg-green-500'
+              }`}
+              style={{ width: `${trafficPercent}%` }}
+            />
+          ) : (
+            <div 
+              className="h-full bg-gradient-to-r from-coral to-peach rounded-full"
+              style={{ width: `${Math.min(100, trafficUsed * 2)}%` }}
+            />
+          )}
+        </div>
+        {isLimited && trafficPercent > 90 && (
+          <p className="text-xs text-red-500 mt-1">⚠️ Трафик почти исчерпан</p>
+        )}
       </div>
 
       <div className="text-center mb-4">
@@ -109,12 +173,12 @@ export default function SubscriptionCard({ subscription }: SubscriptionProps) {
         
         {showKey && subscription.vpnUri && (
           <div className="rounded-lg border p-3 bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700">
-            <p className="text-xs font-mono break-all mb-2 selection:bg-emerald-500/20 selection:text-slate-900 dark:selection:text-slate-100">
+            <p className="text-xs font-mono break-all mb-2">
               {subscription.vpnUri}
             </p>
             <button
               onClick={copyToClipboard}
-              className="w-full py-2 text-sm font-semibold rounded-md inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-500 active:scale-[0.98] transition-transform"
+              className="w-full py-2 text-sm font-semibold rounded-md inline-flex items-center justify-center gap-2 bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-100 border border-slate-300 dark:border-slate-500 active:scale-[0.98] transition-transform"
             >
               📋 Скопировать
             </button>
