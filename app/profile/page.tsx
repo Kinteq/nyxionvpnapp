@@ -131,10 +131,10 @@ export default function ProfilePage() {
                 onClick={() => setShowTerms(false)}
               >
                 <div
-                  className="bg-white dark:bg-surfaceDark w-full max-h-[85vh] rounded-t-3xl overflow-hidden animate-fade-in-up"
+                  className="bg-white dark:bg-surfaceDark w-full max-h-[85vh] rounded-t-3xl flex flex-col animate-fade-in-up"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="sticky top-0 bg-white dark:bg-surfaceDark border-b border-gray-200 dark:border-borderDark p-4 flex justify-between items-center">
+                  <div className="flex-shrink-0 bg-white dark:bg-surfaceDark border-b border-gray-200 dark:border-borderDark p-4 flex justify-between items-center rounded-t-3xl">
                     <h2 className="text-xl font-bold">📄 Пользовательское соглашение</h2>
                     <button 
                       onClick={() => setShowTerms(false)}
@@ -143,22 +143,45 @@ export default function ProfilePage() {
                       ✕
                     </button>
                   </div>
-                  <div className="p-4 overflow-y-auto max-h-[calc(85vh-60px)] text-sm space-y-4">
+                  <div 
+                    className="flex-1 p-4 text-sm space-y-4 overflow-y-scroll overscroll-contain touch-pan-y"
+                    style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
+                  >
                     <section>
-                      <h3 className="font-bold text-base mb-2">Условия использования</h3>
-                      <p className="text-gray-600 dark:text-gray-300">Используя Nyxion, вы автоматически соглашаетесь с этими условиями использования и обязуетесь не нарушать законодательство.</p>
+                      <h3 className="font-bold text-base mb-2">1. Условия использования</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Используя Nyxion VPN, вы автоматически соглашаетесь с настоящими условиями использования и обязуетесь не нарушать действующее законодательство.</p>
                     </section>
                     <section>
-                      <h3 className="font-bold text-base mb-2">Сервис</h3>
-                      <p className="text-gray-600 dark:text-gray-300">VPN-сервис обеспечивает конфиденциальность личной информации путем шифрования и анонимизации метаданных пользователя.</p>
+                      <h3 className="font-bold text-base mb-2">2. Описание сервиса</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Nyxion VPN — это сервис виртуальной частной сети, который обеспечивает защиту вашего интернет-соединения путём шифрования трафика.</p>
                     </section>
                     <section>
-                      <h3 className="font-bold text-base mb-2">Демо период</h3>
-                      <p className="text-gray-600 dark:text-gray-300">Всем пользователям доступен демо период в течение трех дней.</p>
+                      <h3 className="font-bold text-base mb-2">3. Тарифные планы</h3>
+                      <ul className="text-gray-600 dark:text-gray-300 list-disc pl-4 space-y-1">
+                        <li><strong>Личный</strong> — 100 ГБ/мес, до 2 устройств</li>
+                        <li><strong>Премиум</strong> — безлимит, до 2 устройств</li>
+                        <li><strong>Семейный</strong> — безлимит, до 5 устройств</li>
+                      </ul>
                     </section>
                     <section>
-                      <h3 className="font-bold text-base mb-2">Конфиденциальность</h3>
-                      <p className="text-gray-600 dark:text-gray-300">Мы не собираем и не храним данные о вашей онлайн-активности.</p>
+                      <h3 className="font-bold text-base mb-2">4. Промо-период</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Новым пользователям может быть предоставлен бесплатный промо-период для ознакомления с сервисом.</p>
+                    </section>
+                    <section>
+                      <h3 className="font-bold text-base mb-2">5. Конфиденциальность</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Мы не собираем и не храним данные о вашей онлайн-активности. Логи подключений не ведутся.</p>
+                    </section>
+                    <section>
+                      <h3 className="font-bold text-base mb-2">6. Оплата и возврат</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Возврат средств возможен в течение 24 часов после оплаты, если услуга не была использована.</p>
+                    </section>
+                    <section>
+                      <h3 className="font-bold text-base mb-2">7. Запрещённые действия</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Запрещается использовать сервис для незаконной деятельности и нарушения прав третьих лиц.</p>
+                    </section>
+                    <section>
+                      <h3 className="font-bold text-base mb-2">8. Контакты</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Поддержка: <a href="https://t.me/nyxion_support" className="text-blue-500 underline">@nyxion_support</a></p>
                     </section>
                     <p className="text-xs text-gray-500 pt-4 border-t border-gray-200 dark:border-borderDark">Последнее обновление: январь 2026</p>
                   </div>
